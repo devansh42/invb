@@ -114,3 +114,6 @@ let readValidtor=(req,res,next)=>{
         }
 
 }
+
+
+module.exports=router;
