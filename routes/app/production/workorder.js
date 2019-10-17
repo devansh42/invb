@@ -21,10 +21,13 @@ function createOrModify(req,res,create){
     //no need to check for duplicates
     let pstmt;
     if(create){
-        pstmt=await conn.prepare("INSERT INTO workorder(item,qty,bom,post_date,st_date,de_date,nbom)VALUES(?,?,?,?,?,?,?)");
+        pstmt=await conn.prepare("insert into workorder(item,qty,bom,post_date,st_date,de_date,nbom)VALUES(?,?,?,?,?,?,?)");
         pstmt.execute([b.item,b.qty,b.bom,b.post_date,])
-    
     }
+    else{
+        pstmt=await conn.prepare("update workorde")
+    }
+
 }
 
 
