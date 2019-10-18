@@ -14,7 +14,7 @@ router.post("/modify",createModifyValidtor,modify);
 router.post("/read",readValidtor,read);
 
 
-function createOrModify(req,res,create){
+async function createOrModify(req,res,create){
     const b=req.body;
     const conn=await mysql.createConnection(env.MYSQL_Props);
     
@@ -22,12 +22,20 @@ function createOrModify(req,res,create){
     let pstmt;
     if(create){
         pstmt=await conn.prepare("insert into workorder(item,qty,bom,post_date,st_date,de_date,nbom)VALUES(?,?,?,?,?,?,?)");
-        pstmt.execute([b.item,b.qty,b.bom,b.post_date,])
+        await pstmt.execute([b.item,b.qty,b.bom,b.post_date,b.nbom])
     }
     else{
-        pstmt=await conn.prepare("update workorde")
+        pstmt=await conn.prepare("update workorder set qty=? and set bom = ? and set post_date=? and set st_date = ? and set de_date = ? and set nbom=? where id=? limit 1");
+        await pstmt.execute([b.qty,b.bom,b.post_date,b.nbom,b.id])
+        
     }
-
+    res.json({error:false});
+    if(pstmt!=undefined){
+        pstmt.close().then(()=>{
+            conn.close();
+        })
+    }
+    
 }
 
 
@@ -72,9 +80,39 @@ function readValidtor(req,res,next){
     else next();    
     
 }
-
-function read(req,res){
-    const {body}=req;
+ 
+async function read(req,res){
+    const {b}=req;
     const conn=await mysql.createConnection(env.MYSQL_Props);
-    
+    let pstmt,results;
+    let sql="select w.id,w.item,w.qty,w.bom,w.post_date,w.st_date,w.de_date,w.nbom,b.name as bom_name,i.name as item_name from workorder as w join bom as b on b.id=w.bom join item as i on i.id=w.item ";
+    if('item' in b){
+        pstmt= await conn.prepare(sql.concat(" where w.item=?"));
+        [results,c]=await pstmt.execute([b.item])
+    }
+    else if('bom' in b){
+        pstmt= await conn.prepare(sql.concat(" where w.bom=?"));
+        [results,c]=await pstmt.execute([b.bom])
+        
+    }
+    else if('id' in b){
+       //retriving a specific record from the table
+       pstmt= await conn.prepare(sql.concat(" where w.id=? limit 1"));
+       [results,c]=await pstmt.execute([b.id])
+    }
+    else{
+        pstmt= await conn.prepare(sql);
+        [results,c]=await pstmt.execute()
+    }
+
+    res.json({error:false,results});
+    if(pstmt!=undefined){
+        pstmt.close().then(x=>{
+            conn.close();
+        });
+    }
 }
+
+
+
+module.exports=router;
