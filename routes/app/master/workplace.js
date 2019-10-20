@@ -18,7 +18,7 @@ let read=async (req,res)=>{
     const conn=await mysql.createConnection(env.MYSQL_Props);
     let pstmt,b=req.body;
     if('id' in b){
-        pstmt=await conn.prepare("select a.name,a.addr,a.op_time,a.cl_time,a.gid,b.name as group_name from workplace as a inner join groups as b on b.id=a.gid where a.id=? limit 1");
+        pstmt=await conn.prepare("select a.id,a.name,a.addr,a.op_time,a.cl_time,a.gid,b.name as group_name from workplace as a inner join groups as b on b.id=a.gid where a.id=? limit 1");
         [r,w]=await pstmt.execute([b.id])
         if(r.length<1){
             res.json({error:true,errorMsg:"Invalid Workplace Id",code:err.NoContent})
@@ -27,7 +27,7 @@ let read=async (req,res)=>{
         }
     }
     else if('gid' in b){
-        pstmt=await conn.prepare("select a.name,a.addr,a.op_time,a.cl_time,a.gid,b.name as group_name from workplace as a inner join groups as b on b.id=a.gid where a.gid=?");
+        pstmt=await conn.prepare("select a.id,a.name,a.addr,a.op_time,a.cl_time,a.gid,b.name as group_name from workplace as a inner join groups as b on b.id=a.gid where a.gid=?");
         [r,w]=await pstmt.execute([b.gid])
         if(r.length<1){
             res.json({error:true,errorMsg:"Invalid Group Id",code:err.NoContent})
@@ -36,7 +36,7 @@ let read=async (req,res)=>{
         }
     }
     else{
-        pstmt=await conn.prepare("select a.name,a.addr,a.op_time,a.cl_time,a.gid,b.name as group_name from workplace as a inner join groups as b on b.id=a.gid");
+        pstmt=await conn.prepare("select a.id,a.name,a.addr,a.op_time,a.cl_time,a.gid,b.name as group_name from workplace as a inner join groups as b on b.id=a.gid");
         [r,w]=await pstmt.execute()
         res.json({error:false,result:r});
      }

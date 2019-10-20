@@ -45,7 +45,7 @@ let read=async (req,res)=>{
         }else valid=false;
     }
     else{
-        pstmt=await conn.prepare("select a.name,a.unit,a.gid,b.name as unit_name,c.name as group_name from item as a inner join units as b on a.unit=b.id inner join groups as c on a.gid=c.id where a.gid=?");
+        pstmt=await conn.prepare("select a.name,a.unit,a.gid,b.name as unit_name,c.name as group_name from item as a inner join units as b on a.unit=b.id inner join groups as c on a.gid=c.id ");
         [r,c]=await pstmt.execute([b.gid])
         if(r.length>0){
             result=r;

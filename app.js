@@ -56,12 +56,16 @@ app.post("/checkAuth",[authMiddleware],checkAuth);
 //Checks auth token and forward request
 app.use("/app",authMiddleware);
 
+
+app.post("/demo",formData.none(),(r,w)=>{
+  console.log(r.body);
+  w.status(200).end();
+})
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
 });
-
-
 
 
 // error handler

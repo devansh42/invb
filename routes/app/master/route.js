@@ -37,9 +37,16 @@ function createOrModify(req,res,create){
             [r,c]=pstmt.execute([b.name,b.gid,b.description]);
             const rId=r.insertId;    
             pstmt=await conn.prepare("insert into route_operations(route,operation)values(?,?)");
-            const pp=b.operation.map(v=>{
-                return pstmt.execute([rId,v]);
-            });
+            let pp=[];
+            if(b.operation instanceof Array){
+
+                pp=b.operation.map(v=>{
+                    return pstmt.execute([rId,Number(v)]);
+                 });
+           
+            }else{
+                pp.push(pstmt.execute([rId,b.operation]));
+            }
             await Promise.all(pp);
         }else{
             pstmt=await conn.prepare("update route set name=? and set gid=? and set description=? where id=?  limit 1");
@@ -111,7 +118,7 @@ function read(req,res){
         pstmt=await conn.prepare(sql);
         [results,c]=await pstmt.execute();
     }
-    res.json({error:false,results});
+    res.json({error:false,result:results});
     if(pstmt!=undefined){
         pstmt.close().then(x=>{conn.close()});
     }else conn.close();

@@ -53,7 +53,7 @@ function read(req,res){
         results=r;
    
     }
-    res.json({error:false,results}).end()
+    res.json({error:false,result:results}).end()
     if(pstmt!=undefined){
         pstmt.close()
         .then(r=>{conn.close()})
