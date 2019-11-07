@@ -141,3 +141,37 @@ create table job_logs(
     qty float not null,
     constraint fk_jl_jc foreign key(job_card) REFERENCES job_card(id)    
 );
+create table workorder_states(
+    id tinyint not null primary key auto_increment,
+    name varchar(20) not null
+);
+
+create table serial_no_seq(
+  id int not null auto_increment primary key,
+  prefix varchar(20),
+  suffix varchar(20),
+  initalValue int default 1,
+  step int default 1,
+  digits int comment "digits in the dynamic part of serial no"
+);
+create table production_log(
+    id int not null primary key auto_increment,
+    item int,
+    workorder int,
+    job_card int,
+    bom int,
+    constraint fk_pl_wo foreign key(workorder) REFERENCES workorder(id),
+    constraint fk_pl_i foreign key(item) REFERENCES item(id),
+    constraint fk_pl_jc foreign key(job_card) REFERENCES job_card(id),
+    constraint fk_pl_bo foreign key(bom) REFERENCES bom(id)
+);
+create table process_states(
+    id int primary key auto_increment,
+    name varchar(50) 
+);
+create table kv_pair(
+    id int not null primary key auto_increment,
+    kv_key varchar(250),
+    kv_value varchar(250),
+    entity int
+);

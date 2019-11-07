@@ -71,11 +71,17 @@ let createOrModify=async (req,res,create)=>{
     }else{
     
         if(create){
-        let pstmt=await conn.prepare("insert into item(name,unit,gid)values(?,?,?)");
-        await pstmt.execute([b.name,b.unit,b.gid]);
-
-        }
-        else{
+        let pstmt=await conn.prepare("insert into item(name,unit,gid,hser)values(?,?,?,?)");
+        let r=await pstmt.execute([b.name,b.unit,b.gid,b.hser?1:0]);
+            const itemid=r.insertId;
+        if(b.hser){ //checking if item serial no series
+            pstmt=await conn.prepare("insert into serial_no_seq(prefix,suffix,initalValue,step,digits)values(?,?,?,?,?)") 
+            r=await pstmt.execute([b.ser_prefix,b.ser_suffix,b.ser_ini,b.ser_step,b.ser_digit])
+            const id=r.insertId;
+            pstmt=await pstmt.execute("update serial_no_seq set serial_seq=? where id=? limit 1");
+            await pstmt.execute([id,itemid]);
+            }   
+        }else{
          pstmt=await conn.prepare("update item set name=? and gid=? where id=?")
          await pstmt.execute([b.name,b.gid,b.id])
 
