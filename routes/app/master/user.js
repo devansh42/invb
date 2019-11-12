@@ -71,10 +71,7 @@ async function createOrModify(req, res, create) {
 
 async function insertPerms(pstmt, conn, body, uid) {
     pstmt = await conn.prepare("insert into perms(uid,menu)values(?,?)");
-    const ar = body.menu_perm.map(v => {
-        return pstmt.execute([uid, v]);
-    });
-    return Promise.all(ar);//waiting while full filling all the promises
+    return Promise.all(body.menu_perm.map(v=>pstmt.execute([uid,v])) );//waiting while full filling all the promises
 }
 
 
