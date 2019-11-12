@@ -175,3 +175,11 @@ create table kv_pair(
     kv_value varchar(250),
     entity int
 );
+create table serial_nos(
+    id int primary key auto_increment,
+    sn int,
+    ser_seq int,
+    workorder int,
+    constraint fk_sn_sns foreign key(ser_seq) REFERENCES serial_no_seq(id),
+    constraint fk_sn_w foreign key(workorder) REFERENCES workorder(id)
+)
