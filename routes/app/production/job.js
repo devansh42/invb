@@ -70,7 +70,8 @@ function readValidtor(req,res,next){
         id:j.number().positive(),
         workorder:j.number().positive(),
         worker:j.number().positive(),
-        job_card:j.number().positive()
+        job_card:j.number().positive(),
+        job_log:j.number().positive()
     });
     if(o.validate(body)==null){
         res.json({error:true,code:err.BadRequest,errorMsg:"Invalid Request Parameter"});
@@ -83,15 +84,10 @@ async function read(req,res){
     const {b}=req;
     const conn=await mysql.createConnection(env.MYSQL_Props);
     let pstmt,results;
-    let sql="select j.id,j.workorder,j.operation,j.qty,j.worker,j.post_time,a.name as worker_name,o.name as operation_name from job_card as j join account as a on a.id=j.worker join operation as o on o.id=j.operation ";
+    let sql="select j.id,j.state,j.entityId,j.plId,j.workorder,j.operation,j.qty,j.post_time,o.name as operation_name from job_card as j  join operation as o on o.id=j.operation ";
     if('workorder' in b){
         pstmt= await conn.prepare(sql.concat(" where j.workorder=?"));
         [results,c]=await pstmt.execute([b.workorder]);
-    }
-    else if('worker' in b){
-        pstmt= await conn.prepare(sql.concat(" where j.worker=?"));
-        [results,c]=await pstmt.execute([b.worker]);
-        
     }
     else if('operation' in b){
         pstmt= await conn.prepare(sql.concat(" where j.operation=?"));
@@ -105,9 +101,9 @@ async function read(req,res){
     }
     else if('job_log' in b){
         //returns job_logs for a given job_card
-        sql="select job_card,st_time,en_time,qty from job_log where job_card=?";
+        sql="select j.job_card,j.st_time,j.en_time,j.id,j.worker,a.name as worker_name from job_logs as j join account as a on a.id=j.worker  where j.job_card=?";
         pstmt= await conn.prepare(sql);
-        [results,c]=await pstmt.execute([b.id]);
+        [results,c]=await pstmt.execute([b.job_log]);
         
     }
     else{
@@ -117,7 +113,7 @@ async function read(req,res){
      
     }
 
-    res.json({error:false,results});
+    res.json({error:false,result:results});
     if(pstmt!=undefined){
         pstmt.close().then(x=>{
             conn.close();
