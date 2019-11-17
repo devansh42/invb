@@ -79,7 +79,7 @@ function readValidtor(req,res,next){
     const o=j.object({
         name:j.string().max(100),
         gid:j.number().positive(),
-        route_operations:j.array()
+        route_operations:j.number().positive()
     });
     if(o.validate(body)==null){
         res.json({error:false,errorrMsg:"Invalid Request Parameters",code:err.BadRequest}).end();
@@ -110,9 +110,9 @@ function read(req,res){
         
     }
     else if('route_operations' in b){
-        const x="select r.route,r.operation,o.name,o.description,o.workplace,o.gid,g.name as group_name,w.name as workplace_name from route as r join operation as o on r.operation=o.id join groups as g on g.id=o.gid join workplace as w on w.id=o.workplace where r.route=?";
+        const x="select r.route,r.operation,o.name,o.description,o.workplace,o.gid,g.name as group_name,w.name as workplace_name from route_operations as r join operation as o on r.operation=o.id join groups as g on g.id=o.gid join workplace as w on w.id=o.workplace where r.route=?";
         pstmt=await conn.prepare(x);
-        [results,c]=await pstmt.execute([b.id]);
+        [results,c]=await pstmt.execute([b.route_operations]);
     }
     else{
         pstmt=await conn.prepare(sql);
