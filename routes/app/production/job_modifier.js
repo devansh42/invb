@@ -23,7 +23,8 @@ const actionValidator = (req, res, next) => {
     const o = j.object({
         job_card: j.number().required(),
         action: j.string().allow(["start", "finish"]),
-        time: j.number().required()
+        time: j.number().required(),
+        workorder: j.number().required()
     });
     if (o.validate(body) == null) {
         res.json({ error: true, errorMsg: "invalid Request Parameters", code: err.BadRequest });
@@ -80,6 +81,30 @@ const action = async (req, res) => {
             error.nextState = nextState; //new state of operation
             if (action == "finish") {
                 //checking state of workorder
+                sql = "select entityId,plId from job_card where id=?";
+                pstmt = await conn.prepare(sql);
+                let [r] = await pstmt.execute([body.job_card])
+                let eId = r[0].entityId;  //It may be null
+                let plId = r[0].plId;
+
+                let isRouteCompleted = await finish_WithSerial(conn, pstmt, body, eId, plId, eId != null)
+                if (isRouteCompleted) {
+                    //Now we will update workder completed quantity
+                    //And also update workorder satus if it is changed
+                    if (eId != null) {
+                        sql = "update workorder set com_qty = com_qty + 1 and set state = case when com_qty=qty then ? else state end where id= ? ";
+                        pstmt = await conn.prepare(sql);
+                        [r] = await pstmt.execute([4, body.workorder]);
+
+                    } else {
+                        sql = "update workorder set com_qty = qty where id=?";
+                        pstmt = await conn.prepare(sql);
+                        [r] = await pstmt.execute([body.workorder]);
+
+                    }
+
+                }
+
             }
         }
         res.json(error);
@@ -91,6 +116,25 @@ const action = async (req, res) => {
 
 }
 
+
+/**
+ * It's a pure function
+ * @returns {boolean} specify whether route is completed for the item
+ * @param {MySqlPreparedStatement} pstmt 
+ * @param {MySqlConnection} conn 
+ * @param {HttpRequestBody} body 
+ * @param {Number} eId 
+ */
+const finish_WithSerial = async (pstmt, conn, body, eId, plId, haveSerialNo) => {
+    let sql = "select r.operation from route_operations as r join bom as b on r.route =b.routing join workorder as w on w.bom=b.id where w.id=?";
+    pstmt = await conn.prepare(sql);
+    let [operations] = await pstmt.execute([body.workorder]);
+    sql = "select operation from job_card where  and workorder=? and state=? and " + (haveSerialNo) ? "eId = ?" : "plId = ?";
+    pstmt = await conn.prepare(sql);
+    //Fetching operations those are processed
+    [r] = await pstmt.execute([body.workorder, 4, (haveSerialNo) ? eId : plId]);
+    return (r.length == operations.length);
+}
 
 const addValidator = (req, res, next) => {
     const { body } = req;
@@ -157,7 +201,7 @@ const read = async (req, res) => {
     const { body } = req;
     const conn = await mysql.createConnection(env.MYSQL_Props);
     let sql, pstmt;
-    sql = "select sn.sn,sn.ser_seq,j.entityId,j.id,j.workorder,j.operation,j.qty,j.post_time,j.st_time,j.fi_time,j.state,s.name as state_name,o.name from job_card as j join operation as o on o.id=j.operation join process_states as s on s.id=j.state join serial_nos as sn on sn.id=j.entityId where j.id=? limit 1";
+    sql = "select sn.sn,sn.ser_seq,j.plId,j.entityId,j.id,j.workorder,j.operation,j.qty,j.post_time,j.st_time,j.fi_time,j.state,s.name as state_name,o.name from job_card as j join operation as o on o.id=j.operation join process_states as s on s.id=j.state join serial_nos as sn on sn.id=j.entityId where j.id=? limit 1";
     pstmt = await conn.prepare(sql);
     let [r] = await pstmt.execute([body.id]);
     let result;
