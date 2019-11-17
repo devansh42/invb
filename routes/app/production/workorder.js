@@ -5,10 +5,10 @@ const j = require("@hapi/joi");
 const mysql = require("mysql2/promise");
 const env = require("../../../env");
 const err = require("../../../err");
-const SerialSeq = require('../../../entity/serialSeq');
 const express = require("express");
 const router = express.Router();
 
+const SerialSeq = require('../../../entity/serialSeq');
 
 router.post("/create", createModifyValidtor, create);
 router.post("/modify", createModifyValidtor, modify);
@@ -55,22 +55,28 @@ async function createOrModify(req, res, create) {
             let serialNos = await Promise.all(br);
             sql = "INSERT INTO inv.job_card(entityId,workorder,operation,qty,post_time)VALUES(?,?,?,?,?)";
             pstmt = await conn.prepare(sql);
-            r.forEach(v=>{
+            r.forEach(v => {
                 //each operation
-                serialNos.forEach(w=>{
+                serialNos.forEach(w => {
                     /** 
+                    * 
                     *Here we create one job card of one serial numbered item per operation
                     *e.g. if item production have 3 operation step and qty of item is 4 total 4*3 = 12 job cards are created 
                     */
-                    br.push(pstmt.execute([w,wid,v.operation,b.qty,b.post_date]) );
+                    ar.push(pstmt.execute([w, wid, v.operation, b.qty, b.post_date]));
                 });
             });
 
         } else {
-            sql = "INSERT INTO inv.job_card(workorder,operation,qty,post_time)VALUES(?,?,?,?)";
+            sql = "INSERT INTO inv.production_log(item,workorder,qty)VALUES(?,?,?)";
+            pstmt = await conn.prepare(sql);
+            const rs = await pstmt.execute([b.item, wid, b.qty]);
+            const plId = rs.insertId;
+            //This case executes when item is not serialized
+            sql = "INSERT INTO inv.job_card(workorder,operation,qty,post_time,plId)VALUES(?,?,?,?,?)";
             pstmt = await conn.prepare(sql);
             ar = r.map(v => { //Creating one job card for each operation provided by  routing in bom
-                return pstmt.execute([wid, v.operation, b.qty, b.post_date]);
+                return pstmt.execute([wid, v.operation, b.qty, b.post_date, plId]);
             });
         }
 
@@ -138,7 +144,7 @@ async function read(req, res) {
     const { b } = req;
     const conn = await mysql.createConnection(env.MYSQL_Props);
     let pstmt, results;
-    let sql = "select w.id,w.item,w.qty,w.bom,w.post_date,w.state,w.st_date,w.de_date,w.nbom,b.name as bom_name,i.name as item_name from workorder as w join bom as b on b.id=w.bom join item as i on i.id=w.item ";
+    let sql = "select w.id,w.com_qty,w.item,w.qty,w.bom,w.post_date,w.state,w.st_date,w.de_date,w.nbom,b.name as bom_name,i.name as item_name from workorder as w join bom as b on b.id=w.bom join item as i on i.id=w.item ";
     if ('item' in b) {
         pstmt = await conn.prepare(sql.concat(" where w.item=?"));
         [results, c] = await pstmt.execute([b.item])
