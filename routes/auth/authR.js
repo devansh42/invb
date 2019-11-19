@@ -9,7 +9,7 @@ const jwt=require("jsonwebtoken");
 
 
 
-const checkAuth=(req,res)=>{
+const checkAuth=(_,res)=>{
     res.status(200).send("Ok").end();
 }
 
@@ -19,8 +19,8 @@ const authR=(req,res)=>{
         password:j.string().required().min(8)
     });
     
-    
     if(sc.validate(req.body)!=null){
+       
         verifyUser(req.body.username,req.body.password)
         .then(result=>{
             //user is valid
@@ -61,17 +61,13 @@ let makeAuthToken=async (uid)=>{
     return token;
 }
 
-let verifyUser=async (username,password)=>{
+const verifyUser=async (username,password)=>{
     
-    const conn=await mysql.createConnection({
-        host:env.MYSQL_HOST,
-        password:env.MYSQL_PASSWORD,
-        user:env.MYSQL_USER
-    });
+    const conn=await mysql.createConnection(env.MYSQL_Props);
 
-    const pstmt=await conn.prepare("select uid,role from inv.users where username=? and password=? limit 1");
-    [rows,cols]=await pstmt.execute([username,password]);
-    conn.close();
+    const pstmt=await conn.prepare("select uid from users where username=? and password=? limit 1");
+    const [rows]=await pstmt.execute([username,password]);
+    pstmt.close().then(x=>conn.close());
 
     if(rows.length==0){
         //invalid password or username

@@ -9,11 +9,6 @@ const express=require("express");
 const router=express.Router();
 
 
-router.post("/create",createModifyValidtor,create);
-router.post("/modify",createModifyValidtor,modify);
-router.post("/read",readValidtor,read);
-
-
 async function createOrModify(req,res,create){
     const b=req.body;
     const conn=await mysql.createConnection(env.MYSQL_Props);
@@ -120,6 +115,11 @@ async function read(req,res){
         });
     }
 }
+
+
+router.post("/create",createModifyValidtor,create);
+router.post("/modify",createModifyValidtor,modify);
+router.post("/read",readValidtor,read);
 
 
 

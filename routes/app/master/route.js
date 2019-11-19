@@ -8,12 +8,6 @@ const express=require("express");
 const router=express.Router();
 
 
-
-router.post("/create",createModifyValidtor,create);
-router.post("/modify",createModifyValidtor,modify);
-router.post("/read",readValidtor,read);
-
-
 function create(req,res){
     createOrModify(req,res,true);
 }
@@ -24,7 +18,7 @@ function modify(req,res){
 }
 
 
-function createOrModify(req,res,create){
+async function createOrModify(req,res,create){
     const b=req.body;
     const conn=await mysql.createConnection(env.MYSQL_Props);
     let pstmt=await conn.prepare("select id from route where name=? limit 1");
@@ -88,11 +82,11 @@ function readValidtor(req,res,next){
 }
 
 
-function read(req,res){
+async function read(req,res){
     const b=req.body;
     const conn=await mysql.createConnection(env.MYSQL_Props);
     let pstmt,results=[];  
-    const sql="select id,name,gid,description from route_operations"
+    const sql="select id,name,gid,description from route"
     if('name' in b){
         pstmt=await conn.prepare(sql.concat(" where name=? limit 1"));
         [r,c]=await pstmt.execute([b.name]);
@@ -123,3 +117,10 @@ function read(req,res){
         pstmt.close().then(x=>{conn.close()});
     }else conn.close();
 }
+
+
+router.post("/create",createModifyValidtor,create);
+router.post("/modify",createModifyValidtor,modify);
+router.post("/read",readValidtor,read);
+
+module.exports=router;

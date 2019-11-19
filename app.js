@@ -9,6 +9,8 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var {authR,checkAuth}=require("./routes/auth/authR");
 var authMiddleware=require("./routes/auth/authMiddleware");
+const masterEndpoint=require("./routes/app/master/master");
+const productionEndpoint=require("./routes/app/production/production");
 var app = express();
 var formData=multer();
 // view engine setup
@@ -48,20 +50,18 @@ app.use((req,res,next)=>{
   res.set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE");
   res.set("Access-Control-Allow-Headers", "access-control-allow-origin,Content-Type,Authorization,Accept, X-Requested-With, remember-me");
   next();
-})
-app.post("/auth",formData.none(),authR);
+});
+
+
+app.post("/auth",[formData.none()],authR);
 //check if user is already logined or not
 app.post("/checkAuth",[authMiddleware],checkAuth);
 
 //Checks auth token and forward request
 app.use("/app",authMiddleware);
 
-
-app.post("/demo",formData.none(),(r,w)=>{
-  console.log(r.body);
-  w.status(200).end();
-})
-
+app.use("/app/master",masterEndpoint);
+app.use("/app/production",productionEndpoint);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

@@ -4,25 +4,12 @@ const env=require("../../../env");
 const err=require("../../../err");
 const express=require("express");
 const router=express.Router();
-
-
-
-router.post("/create",createModifyValidtor,create);
-router.post("/modify",createModifyValidtor,modify);
-router.post("/read",readValidtor,read);
-
-let create=(req,res)=>{
-    createOrModify(req,res,true);
-}
-let modify=(req,res)=>{
-    createOrModify(req,res,false);
-}
-
 let read=async (req,res)=>{
     let b=req.body;
     const conn=await mysql.createConnection(env.MYSQL_Props);
     let pstmt;
     let valid=true,result=[];
+    console.log(b);
     if('id' in b){
         pstmt=await conn.prepare("select a.name,a.unit,a.gid,b.name as unit_name,c.name as group_name from item as a inner join units as b on a.unit=b.id inner join groups as c on a.gid=c.id where a.id=? limit 1");
         [r,c]=await pstmt.execute([b.id])
@@ -46,7 +33,7 @@ let read=async (req,res)=>{
     }
     else{
         pstmt=await conn.prepare("select a.name,a.unit,a.gid,b.name as unit_name,c.name as group_name from item as a inner join units as b on a.unit=b.id inner join groups as c on a.gid=c.id ");
-        [r,c]=await pstmt.execute([b.gid])
+        [r,c]=await pstmt.execute()
         if(r.length>0){
             result=r;
         }
@@ -120,6 +107,19 @@ let readValidtor=(req,res,next)=>{
         }
 
 }
+
+const create=(req,res)=>{
+    createOrModify(req,res,true);
+}
+const modify=(req,res)=>{
+    createOrModify(req,res,false);
+}
+
+
+
+router.post("/create", createModifyValidtor,create);
+router.post("/modify", createModifyValidtor,modify);
+router.post("/read",readValidtor,read);
 
 
 module.exports=router;

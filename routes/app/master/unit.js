@@ -6,12 +6,6 @@ const express=require("express");
 const router=express.Router();
 
 
-
-router.post("/create",createModifyValidtor,create);
-router.post("/modify",createModifyValidtor,modify);
-router.post("/read",readValidtor,read);
-
-
 let createOrModify=async (req,res,create)=>{
     let b=res.body;
     const conn=await mysql.createConnection(env.MYSQL_Props);
@@ -41,7 +35,7 @@ let createOrModify=async (req,res,create)=>{
 
 }
 
-let read=(req,res)=>{
+let read=async (req,res)=>{
     const conn=await mysql.createConnection(env.MYSQL_Props);
     let pstmt,b=req.body;
     if("id" in b ){
@@ -121,11 +115,18 @@ let readValidtor=(req,res,next)=>{
 
 
 
-let create=(req,res)=>{
+const create=(req,res)=>{
     createOrModify(req,res,true);
 }
-let modify=(req,res)=>{
+const modify=(req,res)=>{
     createOrModify(req,res,false); 
 }
+
+
+
+router.post("/create",createModifyValidtor,create);
+router.post("/modify",createModifyValidtor,modify);
+router.post("/read",readValidtor,read);
+
 
 module.exports=router;

@@ -6,13 +6,6 @@ const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
 
-
-
-router.post("/create", createModifyValidtor, create);
-router.post("/modify", createModifyValidtor, modify);
-router.post("/read", readValidtor, read);
-router.post("/delete", deleteValidator, deleteFn);
-
 const deleteValidator = (req, res) => {
     const b = req.body;
     const o = j.object({ id: j.number().required() });
@@ -121,6 +114,13 @@ let create = (req, res) => {
 let modify = (req, res) => {
     createOrModify(req, res, false);
 }
+
+
+
+router.post("/create", createModifyValidtor, create);
+router.post("/modify", createModifyValidtor, modify);
+router.post("/read", readValidtor, read);
+router.post("/delete", deleteValidator, deleteFn);
 
 
 module.exports = router;

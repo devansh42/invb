@@ -7,11 +7,6 @@ const router=express.Router();
 
 
 
-router.post("/create",createModifyValidtor,create);
-router.post("/modify",createModifyValidtor,modify);
-router.post("/read",readValidtor,read);
-
-
 let createOrModify=async (req,res,create)=>{
     let b=req.body;
     const conn=await mysql.createConnection(env.MYSQL_Props);
@@ -78,8 +73,8 @@ let read=async (req,res)=>{
          if(rows.length<1){
             res.json({error:true,code:err.NoContent,errorMsg:"No Data"});
         }else{
-            let r=rows[0];
-            res.json({error:false,result:{id:r.id,name:r.name}});
+            let r=rows;
+            res.json({error:false,result:r});
         }
     }else{
         //return all
@@ -130,6 +125,11 @@ let createModifyValidtor=(req,res,next)=>{
     else next();
 }
 
+
+
+router.post("/create",createModifyValidtor,create);
+router.post("/modify",createModifyValidtor,modify);
+router.post("/read",readValidtor,read);
 
 
 module.exports=router;

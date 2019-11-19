@@ -13,10 +13,6 @@ const router = express.Router();
 
 //router.post("/create", createModifyValidtor, create);
 //router.post("/modify", createModifyValidtor, modify);
-router.post("/read", readValidtor, read);
-router.post("/delete", deleteValidtor, deleteFn);
-router.post("/add", addValidator, add);
-router.post("/action", actionValidator, action);
 
 const actionValidator = (req, res, next) => {
     const { body } = req;
@@ -233,5 +229,11 @@ const read = async (req, res) => {
     else pstmt.close().then(() => { conn.close() });
 
 }
+
+router.post("/read", readValidtor, read);
+router.post("/delete", deleteValidtor, deleteFn);
+router.post("/add", addValidator, add);
+router.post("/action", actionValidator, action);
+
 
 module.exports = router;

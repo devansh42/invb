@@ -10,11 +10,6 @@ const router = express.Router();
 
 const SerialSeq = require('../../../entity/serialSeq');
 
-router.post("/create", createModifyValidtor, create);
-router.post("/modify", createModifyValidtor, modify);
-router.post("/read", readValidtor, read);
-
-
 async function createOrModify(req, res, create) {
     const b = req.body;
     const conn = await mysql.createConnection(env.MYSQL_Props);
@@ -141,7 +136,7 @@ function readValidtor(req, res, next) {
 }
 
 async function read(req, res) {
-    const { b } = req;
+    const b = req.body;
     const conn = await mysql.createConnection(env.MYSQL_Props);
     let pstmt, results;
     let sql = "select w.id,w.com_qty,w.item,w.qty,w.bom,w.post_date,w.state,w.st_date,w.de_date,w.nbom,b.name as bom_name,i.name as item_name from workorder as w join bom as b on b.id=w.bom join item as i on i.id=w.item ";
@@ -171,6 +166,11 @@ async function read(req, res) {
         });
     }
 }
+
+
+router.post("/create", createModifyValidtor, create);
+router.post("/modify", createModifyValidtor, modify);
+router.post("/read", readValidtor, read);
 
 
 

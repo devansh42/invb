@@ -6,12 +6,6 @@ const express=require("express");
 const router=express.Router();
 
 
-
-router.post("/create",createModifyValidtor,create);
-router.post("/modify",createModifyValidtor,modify);
-router.post("/read",readValidtor,read);
-
-
 let createModifyValidtor=(req,res,next)=>{
     let b=req.body;
     let o=req.object({
@@ -147,5 +141,12 @@ let  createOrModify=async (req,res,state)=>{
     pstmt.close().then(conn.close);
 
 }
+
+
+
+router.post("/create",createModifyValidtor,create);
+router.post("/modify",createModifyValidtor,modify);
+router.post("/read",readValidtor,read);
+
 
 module.exports=router;

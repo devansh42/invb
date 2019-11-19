@@ -7,12 +7,6 @@ const router=express.Router();
 
 
 
-router.post("/create",createModifyValidtor,create);
-router.post("/modify",createModifyValidtor,modify);
-router.post("/read",readValidtor,read);
-
-
-
 let read=async (req,res)=>{
     //reading from database
     const conn=await mysql.createConnection(env.MYSQL_Props);
@@ -135,5 +129,11 @@ let create=(req,res)=>{
 let modify=(req,res)=>{
     createOrModify(req,res,false);
 }
+
+
+router.post("/create",createModifyValidtor,create);
+router.post("/modify",createModifyValidtor,modify);
+router.post("/read",readValidtor,read);
+
 
 module.exports=router;

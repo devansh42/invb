@@ -2,13 +2,17 @@
 
 class SerialSequence {
 
-    id = 1; //the default one
-    prefix = null;
-    suffix = null;
-    initialValue = 1;
-    lastValue = 0;
-    step = 0;
-    digits = 0;
+   
+    constructor(){
+        this.id = 1; //the default one
+        this.prefix = null;
+        this.suffix = null;
+        this.initialValue = 1;
+        this.lastValue = 0;
+        this.step = 0;
+        this.digits = 0;
+    
+    }
 
     /**
      * Populates this object with given property objects 

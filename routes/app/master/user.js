@@ -7,10 +7,6 @@ const router = express.Router();
 
 
 
-router.post("/create", createModifyValidtor, create);
-router.post("/modify", createModifyValidtor, modify);
-router.post("/read", readValidtor, read);
-
 async function read(req, res) {
     const { body } = req;
     const conn = await mysql.createConnection(env.MYSQL_Props);
@@ -116,5 +112,9 @@ function modify(req, res) {
     createOrModify(req, res, false);
 }
 
+
+router.post("/create", createModifyValidtor, create);
+router.post("/modify", createModifyValidtor, modify);
+router.post("/read", readValidtor, read);
 
 module.exports = router;
