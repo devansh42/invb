@@ -89,7 +89,7 @@ let read=async (req,res)=>{
     }
     else{
         pstmt=await conn.prepare(sql);
-        [r,c]=await pstmt.execute([b.id])
+        [r,c]=await pstmt.execute()
         result=r;
     }
     if(valid){
@@ -97,8 +97,8 @@ let read=async (req,res)=>{
     }else{
         res.json({error:true,errorMsg:"No content found",code:err.NoContent});
     }
-    if(pstmt!=undefined)pstmt.close().then(conn.close);
-    else conn.close();
+    if(pstmt!=undefined)pstmt.close().then(()=>conn.end());
+    else conn.end();
 }
 
 
@@ -138,7 +138,8 @@ let  createOrModify=async (req,res,state)=>{
 
         res.json({error:false});
     }
-    pstmt.close().then(conn.close);
+    if(pstmt==undefined) conn.end();
+    pstmt.close().then(()=>conn.end());
 
 }
 

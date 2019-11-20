@@ -108,8 +108,8 @@ const action = async (req, res) => {
     } else {
         res.json({ error: true, errorMsg: "Invalid Job Card Id", code: err.BadRequest });
     }
-    pstmt.close().then(() => { conn.close() });
-
+    if(pstmt!=undefined) pstmt.close().then(() => { conn.end() });
+    else conn.end();
 }
 
 
@@ -157,7 +157,9 @@ const add = async (req, res) => {
     const pstmt = await conn.prepare(sql);
     const ar = body.logs.map(v => pstmt.execute([body.job_card, v.worker, v.st_time, v.en_time, v.description]));
     await Promise.all(ar);
-    pstmt.close().then(() => { conn.close() });
+   
+   if(pstmt!=undefined) pstmt.close().then(() => { conn.end() });
+   else conn.end();
     res.json({ error: false });
 
 }
@@ -225,8 +227,8 @@ const read = async (req, res) => {
         //no result found invalid id
         res.json({ error: true, errorMsg: "Invalid Job Card Id", code: err.BadRequest });
     }
-    if (pstmt == undefined) conn.close();
-    else pstmt.close().then(() => { conn.close() });
+    if (pstmt == undefined) conn.end();
+    else pstmt.close().then(() => { conn.end() });
 
 }
 

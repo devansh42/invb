@@ -18,7 +18,7 @@ function modify(req,res){
 
 
 async function read(req,res){
-    const {b}=req;
+    const b=req.body;
     const conn=await mysql.createConnection(env.MYSQL_Props);
     let pstmt;
     let results=[];  
@@ -50,14 +50,14 @@ async function read(req,res){
     res.json({error:false,result:results}).end()
     if(pstmt!=undefined){
         pstmt.close()
-        .then(r=>{conn.close()})
-    }else conn.close();
+        .then(r=>{conn.end()})
+    }else conn.end();
 }
 
 
 
 async  function createOrModify(req,res,create){
-    const {b}=req;
+    const b=req.body;
     const conn=await mysql.createConnection(env.MYSQL_Props);
     let pstmt=await conn.prepare("select name,gid from operation where name=? and gid=? limit 1");
     let res= await pstmt.execute([b.name,b.gid]);
@@ -76,7 +76,9 @@ async  function createOrModify(req,res,create){
         res.json({error:false}).end();
 
     }
-    pstmt.close().then(r=>conn.close());
+    
+    if(pstmt!=undefined)pstmt.close().then(()=>conn.end());
+    else conn.end();
 }
 
 
@@ -102,7 +104,7 @@ function readValidtor(req,res,next){
     const o=j.object({
         id:j.number().positive(),
         gid:j.number().positive(),
-        workplace:k.number().positive()
+        workplace:j.number().positive()
     });
     if(o.validate(body)==null){
             res.json({error:true,errorMsg:"Invalid paramter supplied",code:err.BadRequest}).end();

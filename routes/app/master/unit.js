@@ -30,8 +30,9 @@ let createOrModify=async (req,res,create)=>{
         res.json({error:false});
         res.end()
     }
-    pstmt.close();
-    conn.close();
+    if(pstmt==undefined) conn.end();
+    else pstmt.close().then(()=>conn.end());
+
 
 }
 
@@ -72,8 +73,8 @@ let read=async (req,res)=>{
         [r,c]=await pstmt.execute()
         res.json({error:false,result:r});
     }
-    if(pstmt!=undefined)pstmt.close().then(r=>conn.closes());
-    else conn.close();
+    if(pstmt!=undefined)pstmt.close().then(()=>conn.end());
+    else conn.end();
     res.end();//ending response
 
 }

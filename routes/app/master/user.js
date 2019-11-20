@@ -10,23 +10,29 @@ const router = express.Router();
 async function read(req, res) {
     const { body } = req;
     const conn = await mysql.createConnection(env.MYSQL_Props);
-    let pstmt, results = [];
+    let pstmt, result = [];
+    const sql = "select u.uid,u.username,u.aid,a.name as account_name from users as u inner join account as a on u.aid=a.id ";
     if ('uid' in body) {
-        pstmt = await conn.prepare("select u.uid,u.username,u.aid,a.name as account_name from users as u innner join account as a on u.aid=a.id where u.uid=? limit 1");
-        [r, c] = await pstmt.execute([body.uid]);
-        results = r;
+        pstmt = await conn.prepare(sql.concat(' where u.uid=? limit 1'));
+        const [r] = await pstmt.execute([body.uid]);
+        result = r;
     }
     else if ('aid' in body) {
-        pstmt = await conn.prepare("select uid,username,aid from users where aid=?");
-        [r, c] = await pstmt.execute([body.aid]);
-        results = r;
+        pstmt = await conn.prepare(sql.concat("where u.aid=? "));
+        const [r] = await pstmt.execute([body.aid]);
+        result = r;
+    } else {
+        //Fetch ALL
+        pstmt = await conn.prepare(sql);
+        const [r] = await pstmt.execute();
+        result = r;
     }
-    res.status(err.Ok).json({ error: false, results })
+    res.status(err.Ok).json({ error: false, result })
     if (pstmt != undefined) {
-        pstmt.close(v => {
-            conn.close();
-        })
-    }
+        pstmt.close().then(v => {
+            conn.end();
+        });
+    }else conn.end();
 }
 
 
@@ -35,7 +41,7 @@ async function createOrModify(req, res, create) {
     const { body } = req;
     const conn = await mysql.createConnection(env.MYSQL_Props);
     let pstmt = await conn.prepare("select uid from users where username=? limit 1");
-    const [r, c] = await pstmt.execute([body.username]);
+    const [r] = await pstmt.execute([body.username]);
     if (r.length > 0) {
         res.status(err.Duplicate).json({ error: true, errorMsg: "Duplicate username" }).end();
     } else {
@@ -60,14 +66,14 @@ async function createOrModify(req, res, create) {
         await pstmt.execute([body.username, body.password]);
         res.status(err.Ok).end();
     }
-    pstmt.close().then(r => { conn.close() });
-
+    if(pstmt!=undefined)  pstmt.close().then(() =>conn.close());
+    else conn.end();
 }
 
 
 async function insertPerms(pstmt, conn, body, uid) {
     pstmt = await conn.prepare("insert into perms(uid,menu)values(?,?)");
-    return Promise.all(body.menu_perm.map(v=>pstmt.execute([uid,v])) );//waiting while full filling all the promises
+    return Promise.all(body.menu_perm.map(v => pstmt.execute([uid, v])));//waiting while full filling all the promises
 }
 
 

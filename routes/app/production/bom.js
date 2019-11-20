@@ -100,8 +100,9 @@ async function createOrModify(req,res,create){
         res.json({error:false}).end();
     
     }
-    pstmt.close().then(r=>{conn.close()});
-
+    
+    if(pstmt!=undefined) pstmt.close().then(()=>{conn.end()});
+    else conn.end();
 }
 
 

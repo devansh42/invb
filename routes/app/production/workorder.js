@@ -70,7 +70,7 @@ async function createOrModify(req, res, create) {
             //This case executes when item is not serialized
             sql = "INSERT INTO inv.job_card(workorder,operation,qty,post_time,plId)VALUES(?,?,?,?,?)";
             pstmt = await conn.prepare(sql);
-            ar = r.map(v => { //Creating one job card for each operation provided by  routing in bom
+            ar = r.map(v => { //Creating one job card for each operation provided by  routing in bom with full quantity
                 return pstmt.execute([wid, v.operation, b.qty, b.post_date, plId]);
             });
         }
@@ -86,9 +86,9 @@ async function createOrModify(req, res, create) {
     res.json({ error: false });
     if (pstmt != undefined) {
         pstmt.close().then(() => {
-            conn.close();
+            conn.end();
         })
-    }
+    } else conn.end();
 
 }
 
@@ -159,12 +159,13 @@ async function read(req, res) {
         [results, c] = await pstmt.execute()
     }
 
-    res.json({ error: false, results });
+    res.json({ error: false, result: results });
     if (pstmt != undefined) {
         pstmt.close().then(x => {
-            conn.close();
+
+            conn.end();
         });
-    }
+    } else conn.end();
 }
 
 

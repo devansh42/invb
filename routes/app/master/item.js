@@ -9,7 +9,7 @@ let read=async (req,res)=>{
     const conn=await mysql.createConnection(env.MYSQL_Props);
     let pstmt;
     let valid=true,result=[];
-    console.log(b);
+  
     if('id' in b){
         pstmt=await conn.prepare("select a.name,a.unit,a.gid,b.name as unit_name,c.name as group_name from item as a inner join units as b on a.unit=b.id inner join groups as c on a.gid=c.id where a.id=? limit 1");
         [r,c]=await pstmt.execute([b.id])
@@ -42,6 +42,8 @@ let read=async (req,res)=>{
         res.json({error:false,result});
         res.end();
     }else res.json({error:true,errorMsg:"Invalid Input supplied",code:err.NoContent});
+    if(pstmt!=undefined)pstmt.close().then(()=>conn.end());
+    else conn.end();
 }
 
 
@@ -75,8 +77,8 @@ let createOrModify=async (req,res,create)=>{
         }
         res.json({error:false});
     }
-    pstmt.close().then(conn.close());
-
+    if(pstmt!=undefined) pstmt.close().then(()=>conn.end());
+    else conn.end();
 }
 
 

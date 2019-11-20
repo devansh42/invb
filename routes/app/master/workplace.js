@@ -35,8 +35,8 @@ let read=async (req,res)=>{
         res.json({error:false,result:r});
      }
     res.end();
-    pstmt.close().then(conn.close());
-
+    if(pstmt!=undefined) pstmt.close().then(()=>conn.end());
+     else conn.end()
 }
 
 
@@ -120,7 +120,8 @@ let createOrModify=async (req,res,create)=>{
         }
         res.json({error:false,code:err.Ok});
     }
-    pstmt.close().then(r=>conn.close());
+    if(pstmt!=undefined) pstmt.close().then(()=>conn.end());
+    else conn.end();
 }
 
 let create=(req,res)=>{

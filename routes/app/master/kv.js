@@ -102,8 +102,8 @@ const createOrModify = async (req, res, state) => {
         await Promise.all(ar);
     }
     res.json({ error: false });
-    if (pstmt == undefined) conn.close();
-    else pstmt.close().then(() => { conn.close() });
+    if (pstmt == undefined) conn.end();
+    else pstmt.close().then(() => { conn.end() });
 
 }
 
