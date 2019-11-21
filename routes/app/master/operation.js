@@ -6,8 +6,8 @@ const err=require("../../../err");
 const express=require("express");
 const router=express.Router();
 
-
 function create(req,res){
+
     createOrModify(req,res,true);
 }
 
@@ -60,14 +60,14 @@ async  function createOrModify(req,res,create){
     const b=req.body;
     const conn=await mysql.createConnection(env.MYSQL_Props);
     let pstmt=await conn.prepare("select name,gid from operation where name=? and gid=? limit 1");
-    let res= await pstmt.execute([b.name,b.gid]);
+    const [rs]= await pstmt.execute([b.name,b.gid]);
     
-    if(res.length>0){
+    if(rs.length>0){
      res.json({error:true,code:err.Duplicate,errorMsg:"Duplicate Item"}).end();
     }else{
         //we can proceed further
         if(create){
-            pstmt=await conn.prepare("insert into opertion(name,gid,workplace,description)values(?,?,?,?)");
+            pstmt=await conn.prepare("insert into operation(name,gid,workplace,description)values(?,?,?,?)");
             await pstmt.execute([b.name,b.gid,b.workplace,b.description]);
         }else{
             pstmt=await conn.prepare("update operation set name=? and set gid=? and set workplace=? and set description=? where id=? limit 1");

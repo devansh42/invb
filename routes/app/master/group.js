@@ -23,7 +23,7 @@ let createOrModify = async (req, res, create) => {
         //creating new
         if (create) {
             pstmt = await conn.prepare("insert into inv.groups (name,type)values(?,?)");
-            [row, col] = await pstmt.execute([name, type]);
+            [row, col] = await pstmt.execute([b.name, b.type]);
             res.status(200);
             res.json({ error: false });
             res.end();

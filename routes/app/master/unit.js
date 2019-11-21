@@ -7,7 +7,7 @@ const router=express.Router();
 
 
 let createOrModify=async (req,res,create)=>{
-    let b=res.body;
+    let b=req.body;
     const conn=await mysql.createConnection(env.MYSQL_Props);
     //checking for duplicate
 

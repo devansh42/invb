@@ -28,7 +28,7 @@ async function createOrModify(req, res, create) {
     } else {
         if (create) {
             pstmt = await conn.prepare("insert into  route(name,gid,description)values(?,?,?)");
-            let r = pstmt.execute([b.name, b.gid, b.description]);
+            let [r] = await pstmt.execute([b.name, b.gid, b.description]);
             const rId = r.insertId;
             pstmt = await conn.prepare("insert into route_operations(route,operation)values(?,?)");
            
@@ -57,10 +57,10 @@ function createModifyValidtor(req, res, next) {
         name: j.string().required().max(100),
         gid: j.number().positive().required(),
         description: j.string(),
-        operation: j.array().required()
+        operation: j.array().items(j.number().positive()).required()
     });
-    if (o.validate(body) != null) {
-        res.json({ error: true, errorMsg: "Invalid Parameter Supplied", code: err.BadRequest });
+    if (o.validate(body) == null) {
+        res.json({ error: true, errorMsg: "Invalid Parameter Supplied",code: err.BadRequest });
         res.end();
     }
     else next();
