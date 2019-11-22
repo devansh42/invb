@@ -49,7 +49,7 @@ async function read(req,res){
     }
 
 
-    res.json({error:false,results}).end();
+    res.json({error:false,result:results}).end();
     
     if(pstmt!=undefined){
         pstmt.close().then(r=>{
@@ -85,8 +85,8 @@ async function createOrModify(req,res,create){
             [r,c]=await pstmt.execute([b.name,b.item,b.qty,b.route,b.description]);
             const bomId=r.insertId;
             pstmt =await conn.prepare("insert into bom_material(bom,item,qty,rate)values(?,?,?,?)");
-            const pp=b.material.map(v=>{
-                return pstmt.execute([bomId,v.item,v.qty,v.rate]);//appending promises to resolve at same time
+            const pp=b.materialList.map(v=>{
+                return pstmt.execute([bomId,v.id,v.qty,v.rate]);//appending promises to resolve at same time
             });
             await Promise.all(pp); //resolve when all the promises are 
 
@@ -129,11 +129,12 @@ function createModifyValidtor(req,res,next){
         qty:j.number().positive().required(),
         description:j.string().max(500),
         route:j.number().positive().required(),
-        material:j.array({
-           item:j.number().positive(),
-           qty:j.number().positive(),
-           rate:j.number().positive() 
-        })  
+        materialList:j.array().items(j.object({
+            item:j.number().positive(),
+            qty:j.number().positive(),
+            rate:j.number().positive() 
+           
+        }))  
     });
     if(o.validate(b)==null){
         res.json({error:true,code:err.BadRequest,errorMsg:"Invalid request parameter supplied"});
@@ -143,7 +144,7 @@ function createModifyValidtor(req,res,next){
 }
 
 
-router.post("/create",createModifyValidtor,create);
+router.post("/create",express.json({type:"*/*"}), createModifyValidtor,create);
 router.post("/modify",createModifyValidtor,modify);
 router.post("/read",readValidtor,read);
 

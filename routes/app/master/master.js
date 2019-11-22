@@ -15,7 +15,7 @@ const routing = require("./route");
 
 route.use(formData.none());
 
-route.use("/route", express.json({type:"*/*"}),routing);
+route.use("/route", routing);
 route.use("/account", account);
 route.use("/item", item);
 route.use("/group", group);

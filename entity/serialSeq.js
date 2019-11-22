@@ -2,8 +2,8 @@
 
 class SerialSequence {
 
-   
-    constructor(){
+
+    constructor() {
         this.id = 1; //the default one
         this.prefix = null;
         this.suffix = null;
@@ -11,7 +11,7 @@ class SerialSequence {
         this.lastValue = 0;
         this.step = 0;
         this.digits = 0;
-    
+
     }
 
     /**
@@ -23,9 +23,9 @@ class SerialSequence {
         this.prefix = o.prefix;
         this.suffix = o.suffix;
         this.initialValue = o.initialValue;
-        this.lastValue = os.lastValue;
+        this.lastValue = o.lastValue;
         this.step = o.step;
-        this.digits = o.digits;
+        this.digits = o.digits; 
     }
 
     /**
@@ -35,8 +35,10 @@ class SerialSequence {
      */
     getSerialNo(no) {
         let dc = 0;
-        let m = no;
-        while (m > 0) { dc++; m /= 10 }
+        let m = no; 
+        while (m > 0) { dc++; m = parseInt(m / 10); }
+        console.log(this.digits - dc, this.digits, dc, no);
+        console.dir(this);
         let mi = "0".repeat(this.digits - dc);
         mi += no;
 
@@ -59,7 +61,9 @@ class SerialSequence {
         this.lastValue += this.step;
         const no = this.lastValue;
 
-        return [this.getSerialNo(no), no];
+        const x= [this.getSerialNo(no), no];
+        console.log(x);
+        return x;
     }
 
 }

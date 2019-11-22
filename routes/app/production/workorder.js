@@ -17,8 +17,8 @@ async function createOrModify(req, res, create) {
     //no need to check for duplicates
     let pstmt;
     if (create) {
-        pstmt = await conn.prepare("insert into workorder(item,qty,bom,post_date,st_date,de_date,nbom)VALUES(?,?,?,?,?,?,?)");
-        const resultSet = await pstmt.execute([b.item, b.qty, b.bom, b.post_date, b.nbom])
+        pstmt = await conn.prepare("insert into workorder(item,qty,bom,post_date,st_date,de_date,nbom,state)VALUES(?,?,?,?,?,?,?,?)");
+        const [resultSet] = await pstmt.execute([b.item, b.qty, b.bom, b.post_date, b.st_date, b.de_date, b.nbom, 1])
         const wid = resultSet.insertId;
         //Check if this item has serial no.
         pstmt = await conn.prepare("select hser,serial_seq from item where id=?");
@@ -40,50 +40,58 @@ async function createOrModify(req, res, create) {
         let ar;
         if (info.hser == 1) {
             //now item has serial no
-
+            const serialValues=[] ; //contains variable part of serial no
             pstmt = await conn.prepare(sql1);
-            const br = [];
+            const ar = [], br = [];
             for (let i = 0; i < b.qty; i++) {
-                br.push(pstmt.execute([ser_seq.getNextSerialNo()[1], ser_seq.id, wid]));
+                const n=ser_seq.getNextSerialNo();
+                br.push(pstmt.execute([n[1], ser_seq.id, wid]));
+                serialValues.push(n[1]);
             }
 
             let serialNos = await Promise.all(br);
             sql = "INSERT INTO inv.job_card(entityId,workorder,operation,qty,post_time)VALUES(?,?,?,?,?)";
             pstmt = await conn.prepare(sql);
+
             r.forEach(v => {
                 //each operation
-                serialNos.forEach(w => {
+
+                serialNos.forEach(async ([w]) => {
                     /** 
                     * 
                     *Here we create one job card of one serial numbered item per operation
                     *e.g. if item production have 3 operation step and qty of item is 4 total 4*3 = 12 job cards are created 
                     */
-                    ar.push(pstmt.execute([w, wid, v.operation, b.qty, b.post_date]));
+                    await (pstmt.execute([w.insertId, wid, v.operation, b.qty, b.post_date]));
                 });
             });
+            //Now we will update lastValue of serial no sequence
+            const maxValue=serialValues.reduce((max,v)=>v>max?v:max,0);
+            pstmt = await conn.prepare("update serial_no_seq set lastValue=? where id=? limit 1");
+            await pstmt.execute([maxValue,ser_seq.id]);
 
         } else {
             sql = "INSERT INTO inv.production_log(item,workorder,qty)VALUES(?,?,?)";
             pstmt = await conn.prepare(sql);
-            const rs = await pstmt.execute([b.item, wid, b.qty]);
+            const [rs] = await pstmt.execute([b.item, wid, b.qty]);
             const plId = rs.insertId;
             //This case executes when item is not serialized
             sql = "INSERT INTO inv.job_card(workorder,operation,qty,post_time,plId)VALUES(?,?,?,?,?)";
             pstmt = await conn.prepare(sql);
-            ar = r.map(v => { //Creating one job card for each operation provided by  routing in bom with full quantity
-                return pstmt.execute([wid, v.operation, b.qty, b.post_date, plId]);
+            r.forEach(async v => { //Creating one job card for each operation provided by  routing in bom with full quantity
+                await pstmt.execute([wid, v.operation, b.qty, b.post_date, plId]);
             });
         }
 
-        await Promise.all(ar);
         await conn.commit();
+        res.json({ error: false, result:{wid} });
     }
     else {
         pstmt = await conn.prepare("update workorder set qty=? and set bom = ? and set post_date=? and set st_date = ? and set de_date = ? and set nbom=? where id=? limit 1");
         await pstmt.execute([b.qty, b.bom, b.post_date, b.nbom, b.id])
-
+        res.json({ error: false });
     }
-    res.json({ error: false });
+   
     if (pstmt != undefined) {
         pstmt.close().then(() => {
             conn.end();

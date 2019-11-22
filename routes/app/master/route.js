@@ -31,11 +31,11 @@ async function createOrModify(req, res, create) {
             let [r] = await pstmt.execute([b.name, b.gid, b.description]);
             const rId = r.insertId;
             pstmt = await conn.prepare("insert into route_operations(route,operation)values(?,?)");
-           
-            b.operation.forEach(async (v,i)=>{
-                await pstmt.execute([rId,Number(v)]); //We didn't use map function, because order of operations in route is also important
+
+            b.operation.forEach(async (v, i) => {
+                await pstmt.execute([rId, Number(v)]); //We didn't use map function, because order of operations in route is also important
             })
-           } else {
+        } else {
             pstmt = await conn.prepare("update route set name=? and set gid=? and set description=? where id=?  limit 1");
             await pstmt.execute([b.name, b.gid, b.description, b.id]);
         }
@@ -60,7 +60,7 @@ function createModifyValidtor(req, res, next) {
         operation: j.array().items(j.number().positive()).required()
     });
     if (o.validate(body) == null) {
-        res.json({ error: true, errorMsg: "Invalid Parameter Supplied",code: err.BadRequest });
+        res.json({ error: true, errorMsg: "Invalid Parameter Supplied", code: err.BadRequest });
         res.end();
     }
     else next();
@@ -71,7 +71,7 @@ function readValidtor(req, res, next) {
     const o = j.object({
         name: j.string().max(100),
         gid: j.number().positive(),
-        route_operations: j.number().positive()
+        route_operations: j.array().items(j.number().positive())
     });
     if (o.validate(body) == null) {
         res.json({ error: false, errorrMsg: "Invalid Request Parameters", code: err.BadRequest }).end();
@@ -82,33 +82,42 @@ function readValidtor(req, res, next) {
 
 async function read(req, res) {
     const b = req.body;
+    console.log(b);
     const conn = await mysql.createConnection(env.MYSQL_Props);
     let pstmt, results = [];
-    const sql = "select id,name,gid,description from route"
+    const sql = "select r.id,r.name,r.gid,r.description,g.name as group_name from route as r join groups as g on g.id=r.gid ";
     if ('name' in b) {
-        pstmt = await conn.prepare(sql.concat(" where name=? limit 1"));
+        pstmt = await conn.prepare(sql.concat(" where r.name=? limit 1"));
         [r, c] = await pstmt.execute([b.name]);
         results = r[0];
     }
     else if ('gid' in b) {
-        pstmt = await conn.prepare(sql.concat(" where gid=?"));
+        pstmt = await conn.prepare(sql.concat(" where g.gid=?"));
         [results, c] = await pstmt.execute([b.gid]);
 
     }
     else if ('id' in b) {
-        pstmt = await conn.prepare(sql.concat(" where id=? limit 1"));
+        pstmt = await conn.prepare(sql.concat(" where r.id=? limit 1"));
         [r, c] = await pstmt.execute([b.id]);
         results = r[0];
 
     }
     else if ('route_operations' in b) {
-        const x = "select r.route,r.operation,o.name,o.description,o.workplace,o.gid,g.name as group_name,w.name as workplace_name from route_operations as r join operation as o on r.operation=o.id join groups as g on g.id=o.gid join workplace as w on w.id=o.workplace where r.route=?";
+        const ro = typeof b.route_operations instanceof Array ? b.route_operations :[b.route_operations];        
+        const y = ro.map(x => '?').join(',');
+
+        const x = "select r.route,r.operation,o.name,o.description,o.workplace,o.gid,g.name as group_name,w.name as workplace_name from route_operations as r join operation as o on r.operation=o.id join groups as g on g.id=o.gid join workplace as w on w.id=o.workplace where r.route in ("+y+")";
+
         pstmt = await conn.prepare(x);
-        [results, c] = await pstmt.execute([b.route_operations]);
+        [results, c] = await pstmt.execute([...ro]);
     }
     else {
+
         pstmt = await conn.prepare(sql);
         [results, c] = await pstmt.execute();
+
+
+
     }
     res.json({ error: false, result: results });
     if (pstmt != undefined) {
@@ -116,9 +125,9 @@ async function read(req, res) {
     } else conn.end();
 }
 
-
-router.post("/create", createModifyValidtor, create);
-router.post("/modify", createModifyValidtor, modify);
+const js = express.json({ type: "*/*" });
+router.post("/create", js, createModifyValidtor, create);
+router.post("/modify", js, createModifyValidtor, modify);
 router.post("/read", readValidtor, read);
 
 module.exports = router;
