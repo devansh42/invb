@@ -8,14 +8,14 @@ const router=express.Router();
 
 let createModifyValidtor=(req,res,next)=>{
     let b=req.body;
-    let o=req.object({
+    let o=j.object({
         id:j.number().positive(),
         name:j.string().min(2).max(100).required(),
         gender:j.number().min(0).max(1).required(),
         gid:j.number().positive().required(),
         dob:j.date().required(),
         mobile_no:j.string().min(10).max(15),
-        email:j.email(),
+        email:j.string(),
         addr:j.string().max(200),
         town:j.string().max(20),
         pincode:j.string().regex(/^\d{6}$/),

@@ -18,7 +18,7 @@ const actionValidator = (req, res, next) => {
     const { body } = req;
     const o = j.object({
         job_card: j.number().required(),
-        action: j.string().allow(["start", "finish"]),
+        action: j.string().allow("start", "finish"),
         time: j.number().required(),
         workorder: j.number().required()
     });
@@ -39,10 +39,10 @@ const action = async (req, res) => {
     if (r.length > 0) {
         const { st_time, fi_time, state } = r[0];
         let nextState = 0;
-        switch (action) {
+        switch (b.action) {
             case "start":
                 if (state == 1) {
-                    sql = "update job_card set st_time = ? and state = ? where id = ? limit 1";
+                    sql = "update job_card set st_time = ? , state = ? where id = ? limit 1";
                     nextState = 2;
                 } else error = {
                     error: true,
@@ -52,8 +52,8 @@ const action = async (req, res) => {
 
                 break;
             case "finish":
-                if (state > 2) {
-                    sql = "update job_card set fi_time = ? and state = ? where id = ? limit 1";
+                if (state >= 2) {
+                    sql = "update job_card set fi_time = ? , state = ? where id = ? limit 1";
                     nextState = 4;
                 } else error = {
                     error: true,
@@ -75,7 +75,7 @@ const action = async (req, res) => {
             pstmt = await conn.prepare(sql);
             await pstmt.execute([body.time, nextState, body.job_card]);
             error.nextState = nextState; //new state of operation
-            if (action == "finish") {
+            if (b.action == "finish") {
                 //checking state of workorder
                 sql = "select entityId,plId from job_card where id=?";
                 pstmt = await conn.prepare(sql);
@@ -88,7 +88,8 @@ const action = async (req, res) => {
                     //Now we will update workder completed quantity
                     //And also update workorder satus if it is changed
                     if (eId != null) {
-                        sql = "update workorder set com_qty = com_qty + 1 and set state = case when com_qty=qty then ? else state end where id= ? ";
+                        console.log("fkrokforkfo")
+                        sql = "update workorder set com_qty = com_qty + 1 , state = case when com_qty=qty then ? else state end where id= ? ";
                         pstmt = await conn.prepare(sql);
                         [r] = await pstmt.execute([4, body.workorder]);
 
@@ -121,11 +122,12 @@ const action = async (req, res) => {
  * @param {HttpRequestBody} body 
  * @param {Number} eId 
  */
-const finish_WithSerial = async (pstmt, conn, body, eId, plId, haveSerialNo) => {
+const finish_WithSerial = async (conn,pstmt, body, eId, plId, haveSerialNo) => {
     let sql = "select r.operation from route_operations as r join bom as b on r.route =b.routing join workorder as w on w.bom=b.id where w.id=?";
     pstmt = await conn.prepare(sql);
     let [operations] = await pstmt.execute([body.workorder]);
-    sql = "select operation from job_card where  and workorder=? and state=? and " + (haveSerialNo) ? "eId = ?" : "plId = ?";
+    const col = haveSerialNo ? "entityId":"plId";
+    sql = `select operation from job_card where  workorder=? and state=? and ${col}=?`;
     pstmt = await conn.prepare(sql);
     //Fetching operations those are processed
     [r] = await pstmt.execute([body.workorder, 4, (haveSerialNo) ? eId : plId]);
@@ -136,12 +138,12 @@ const addValidator = (req, res, next) => {
     const { body } = req;
     const o = j.object({
         job_card: j.number(),
-        logs: j.array({
+        logs: j.array().items(j.object({
             worker: j.number(),
             st_time: j.number(),
             en_time: j.number(),
             description: j.string()
-        })
+        }))
     });
     if (o.validate(body) == null) {
         res.json({ error: true, errorMsg: "Invalid Request Parameters", code: err.BadRequest });
@@ -167,7 +169,7 @@ const add = async (req, res) => {
 const deleteValidtor = (req, res, next) => {
     const { body } = req;
     const o = j.object({
-        id: j.array().items(...j.number())
+        id: j.array().items(j.number())
     });
 
     if (o.validate(body) == null) {
@@ -183,7 +185,8 @@ const deleteFn = async (req, res) => {
     const pstmt = await conn.prepare(sql);
     const ar = body.id.map(v => pstmt.execute([v]));
     await Promise.all(ar);
-    pstmt.close().then(() => { conn.close() });
+    if(pstmt!=undefined)pstmt.close().then(() => { conn.end() });
+    else conn.end();
     res.json({ error: false });
 }
 
@@ -216,7 +219,7 @@ const read = async (req, res) => {
         }
         sql = "select j.id,j.job_card,j.worker,j.st_time,j.en_time,j.description,a.name as worker_name from job_logs as j join  account as a on a.id = j.worker where j.job_card=?";
         pstmt = await conn.prepare(sql);
-        [r] = pstmt.execute([body.id]);
+        [r] = await pstmt.execute([body.id]);
         result.job_logs = r; //saving logs
         //Now, we will
 
@@ -233,8 +236,8 @@ const read = async (req, res) => {
 }
 
 router.post("/read", readValidtor, read);
-router.post("/delete", deleteValidtor, deleteFn);
-router.post("/add", addValidator, add);
+router.post("/delete",express.json({type:"*/*"}), deleteValidtor, deleteFn);
+router.post("/add", express.json({type:"*/*"}), addValidator, add);
 router.post("/action", actionValidator, action);
 
 

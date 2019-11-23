@@ -34,7 +34,7 @@ const deleteFn = async (req, res) => {
 
 
 
-const readValidtor = (req, res) => {
+const readValidtor = (req, res,next) => {
     const b = req.body;
     const o = j.object({
         id: j.number().required()

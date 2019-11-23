@@ -37,8 +37,6 @@ class SerialSequence {
         let dc = 0;
         let m = no; 
         while (m > 0) { dc++; m = parseInt(m / 10); }
-        console.log(this.digits - dc, this.digits, dc, no);
-        console.dir(this);
         let mi = "0".repeat(this.digits - dc);
         mi += no;
 
@@ -62,7 +60,6 @@ class SerialSequence {
         const no = this.lastValue;
 
         const x= [this.getSerialNo(no), no];
-        console.log(x);
         return x;
     }
 
