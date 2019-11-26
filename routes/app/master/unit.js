@@ -25,7 +25,8 @@ let createOrModify = async (req, res, create) => {
                 await pstmt.execute([b.name, b.symbol])
 
             } else {
-                pstmt = await conn.prepare("update units set name=? and symbol=? where id=? limit 1");
+                //can only update name and symbol
+                pstmt = await conn.prepare("update units set name=? , symbol=? where id=? limit 1");
                 await pstmt.execute([b.name, b.symbol, b.id]);
 
             }
