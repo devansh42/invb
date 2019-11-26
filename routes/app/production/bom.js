@@ -100,9 +100,10 @@ async function createOrModify(req, res, create) {
                 await Promise.all(pp); //resolve when all the promises are 
 
             } else {
-                pstmt = await conn.prepare("update bom set name=? and set item=? and set qty=? and set routing=? and set description=? where id=? limit 1");
+               //We cannot change any thing in bom
+                /* pstmt = await conn.prepare("update bom set name=? and set item=? and set qty=? and set routing=? and set description=? where id=? limit 1");
                 await pstmt.execute([b.name, b.item, b.qty, b.route, b.description, b.id]);
-
+                 */   
             }
 
 
