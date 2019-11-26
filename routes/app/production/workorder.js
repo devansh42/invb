@@ -88,9 +88,12 @@ async function createOrModify(req, res, create) {
             res.json({ error: false, result: { wid } });
         }
         else {
+            //Can't change anything in workorder
+            /*
             pstmt = await conn.prepare("update workorder set qty=? , bom = ? , post_date=? , st_date = ? , de_date = ? , nbom=? where id=? limit 1");
             await pstmt.execute([b.qty, b.bom, new Date(b.post_date).getTime(), b.nbom, b.id])
             res.json({ error: false });
+            */
         }
         await conn.commit(); //commiting transaction
 
