@@ -11,7 +11,7 @@ let read = async (req, res) => {
     //reading from database
     const conn = await mysql.createConnection(env.MYSQL_Props);
     let pstmt, b = req.body;
-    try{
+    try {
         if ('id' in b) {
             pstmt = await conn.prepare("select a.id,a.name,a.addr,a.op_time,a.cl_time,a.gid,b.name as group_name from workplace as a inner join groups as b on b.id=a.gid where a.id=? limit 1");
             [r, w] = await pstmt.execute([b.id])
@@ -123,7 +123,8 @@ let createOrModify = async (req, res, create) => {
                 pstmt = await conn.prepare("insert into workplace(name,addr,op_time,cl_time,gid)values(?,?,?,?,?)");
                 await pstmt.execute([b.name, b.addr, a, c, b.gid]);
             } else {
-                pstmt = await conn.prepare("update workplace set name=? and addr=? and op_time=? and cl_time=? and gid=? where id=? limit 1");
+                //we can change everything about workplace
+                pstmt = await conn.prepare("update workplace set name=? , addr=?, op_time=? , cl_time=? , gid=? where id=? limit 1");
                 await pstmt.execute([b.name, b.addr, a, c, b.gid, b.id]);
             }
             res.json({ error: false, code: err.Ok });
