@@ -80,7 +80,8 @@ async function createOrModify(req, res, create) {
                 pstmt = await conn.prepare("insert into operation(name,gid,workplace,description)values(?,?,?,?)");
                 await pstmt.execute([b.name, b.gid, b.workplace, b.description]);
             } else {
-                pstmt = await conn.prepare("update operation set name=? and set gid=? and set workplace=? and set description=? where id=? limit 1");
+                //we can change everything about operation
+                pstmt = await conn.prepare("update operation set name=? , gid=? , workplace=?, description=? where id=? limit 1");
                 await pstmt.execute([b.name, b.gid, b.workplace, b.description, b.id])
             }
             res.json({ error: false })

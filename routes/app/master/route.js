@@ -41,8 +41,10 @@ async function createOrModify(req, res, create) {
                     await pstmt.execute([rId, Number(v)]); //We didn't use map function, because order of operations in route is also important
                 })
             } else {
-                pstmt = await conn.prepare("update route set name=? and set gid=? and set description=? where id=?  limit 1");
+                //we change every thing about route accept except operations list, so far lol.
+                pstmt = await conn.prepare("update route set name=? , gid=? , description=? where id=?  limit 1");
                 await pstmt.execute([b.name, b.gid, b.description, b.id]);
+
             }
 
             res.json({ error: false });
