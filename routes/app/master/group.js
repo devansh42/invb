@@ -34,11 +34,9 @@ let createOrModify = async (req, res, create) => {
                 pstmt = await conn.prepare("update inv.group set name=? where id=? ");
                 [row, col] = await pstmt.execute([b.name, b.id]);
                 if (rows.length < 1) {
-                    res.status(200);
                     res.json({ error: true, errorMsg: "Couldn't update Group" });
                     res.end()
                 } else {
-                    res.status(200);
                     res.json({ error: false });
                     res.end();
                 }
