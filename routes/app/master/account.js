@@ -139,7 +139,8 @@ let createOrModify = async (req, res, state) => {
                 pstmt = await conn.prepare("insert into account(name,gender,dob,mobile_no,email,addr,town,pincode,id_proof,id_proof_no,join_date,gid)VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")
                 await pstmt.execute(ar);
             } else {
-                pstmt = await conn.prepare("update account set name=? and set gender=? and set dob=? and set mobile_no=? and set email=? and set addr=? and set town=? and set pincode=? and set id_proof=? and set id_proof_no=? and set join_date=? and set gid=? where id=?");
+                //We can change everything about an account
+                pstmt = await conn.prepare("update account set name=? , gender=? , dob=?, mobile_no=? , email=? , addr=? , town=? , pincode=? , id_proof=? , id_proof_no=? , join_date=? , gid=? where id=?");
                 ar.push(b.id);
                 await pstmt.execute(ar);
             }
