@@ -59,14 +59,14 @@ let read = async (req, res) => {
     let pstmt;
     try {
         if ("id" in b) {
-            pstmt = await conn.prepare("select inv.groups.name,inv.groups.type,inv.group_type.text from inv.groups left join on inv.groups.type=inv.group_type.id where inv.groups.id=? limit 1");
+            pstmt = await conn.prepare("select g.id,g.name,g.type,gt.text as type_name from groups as g join group_type as gt on g.type=gt.id where g.id=? limit 1");
             [rows, cols] = await pstmt.execute([b.id])
             res.status(200)
             if (rows.length < 1) {
                 res.json({ error: true, code: err.NoContent, errorMsg: "No Data" });
             } else {
                 let r = rows[0];
-                res.json({ error: false, result: { name: r.name, type: r.type, id: b.id, type_name: r.text } });
+                res.json({ error: false, result:r });
 
             }
         }
