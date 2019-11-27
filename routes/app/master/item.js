@@ -10,29 +10,31 @@ let read = async (req, res) => {
     let pstmt;
     let valid = true, result = [];
     try {
+        const sql="select a.id,a.name,a.unit,a.gid,b.name as unit_name,c.name as group_name,a.hser,s.id,s.prefix,s.suffix,s.initialValue,s.step,s.digits from item as a left join serial_no_seq as s on s.id=a.serial_seq  join units as b on a.unit=b.id inner join groups as c on a.gid=c.id ";
         if ('id' in b) {
-            pstmt = await conn.prepare("select a.id,a.name,a.unit,a.gid,b.name as unit_name,c.name as group_name from item as a inner join units as b on a.unit=b.id inner join groups as c on a.gid=c.id where a.id=? limit 1");
+            pstmt = await conn.prepare(sql.concat(" where a.id=? limit 1"));
             [r, c] = await pstmt.execute([b.id])
             if (r.length > 0) {
                 result = r[0];
             } else valid = false;
         }
         else if ('name' in b) {
-            pstmt = await conn.prepare("select a.id,a.name,a.unit,a.gid,b.name as unit_name,c.name as group_name from item as a inner join units as b on a.unit=b.id inner join groups as c on a.gid=c.id where a.name=? limit 1");
-            [r, c] = await pstmt.execute([b.name])
+         
+            pstmt = await conn.prepare(sql.concat(" where a.name=? limit 1"));
+            [r, c] = await pstmt.execute([b.name]);
             if (r.length > 0) {
                 result = r[0];
             } else valid = false;
         }
         else if ('gid' in b) {
-            pstmt = await conn.prepare("select a.id,a.name,a.unit,a.gid,b.name as unit_name,c.name as group_name from item as a inner join units as b on a.unit=b.id inner join groups as c on a.gid=c.id where a.gid=?");
+            pstmt = await conn.prepare(sql.concat(' where a.gid=?'));
             [r, c] = await pstmt.execute([b.gid])
             if (r.length > 0) {
                 result = r;
             } else valid = false;
         }
         else {
-            pstmt = await conn.prepare("select a.id,a.name,a.unit,a.gid,b.name as unit_name,c.name as group_name from item as a inner join units as b on a.unit=b.id inner join groups as c on a.gid=c.id ");
+            pstmt = await conn.prepare(sql);
             [r, c] = await pstmt.execute()
             if (r.length > 0) {
                 result = r;
