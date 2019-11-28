@@ -6,7 +6,7 @@ const env = require("../../../env");
 const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
-
+const logg =require("../../../entity/logg");
 
 function create(req, res) {
     createOrModify(req, res, true);
@@ -52,6 +52,7 @@ async function createOrModify(req, res, create) {
         await conn.commit();
     } catch (er) {
         await conn.rollback();
+        logg.log(er.message);
         res.json({ error: true, code: err.InternalServer, errorMsg: err.InterServerErrMsg });
     }
     finally {
@@ -139,6 +140,7 @@ async function read(req, res) {
 
     }
     catch (er) {
+        logg.log(er.message);
         res.json(err.InternalServerObj);
     } finally {
         if (pstmt != undefined) {

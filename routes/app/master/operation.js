@@ -5,6 +5,7 @@ const env = require("../../../env");
 const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
+const logg =require("../../../entity/logg");
 
 function create(req, res) {
 
@@ -37,7 +38,7 @@ async function read(req, res) {
         }
         else if ('id' in b) {
             pstmt = await conn.prepare(sql.concat(" where o.id=? limit 1"));
-            [r, c] = await pstmt.execute([b.workplace]);
+            [r, c] = await pstmt.execute([b.id]);
             results = r[0];
 
         }
@@ -51,6 +52,8 @@ async function read(req, res) {
         res.json({ error: false, result: results }).end()
     }
     catch (er) {
+        
+        logg.log(er.message);
         res.json(err.InternalServerObj);
     }
     finally {
@@ -90,7 +93,7 @@ async function createOrModify(req, res, create) {
 
     } catch (er) {
         res.json({ error: true, errorMsg: err.InterServerErrMsg, code: err.InternalServer });
-
+        logg.log(er.message);
     }
     finally {
 

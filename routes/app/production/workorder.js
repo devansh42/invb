@@ -7,7 +7,7 @@ const env = require("../../../env");
 const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
-
+const logg = require("../../../entity/logg");
 const SerialSeq = require('../../../entity/serialSeq');
 
 async function createOrModify(req, res, create) {
@@ -98,6 +98,7 @@ async function createOrModify(req, res, create) {
         await conn.commit(); //commiting transaction
 
     } catch (er) {
+        logg.log(er.message);
         await conn.rollback();
         res.json(err.InternalServerObj);
     }
@@ -185,6 +186,7 @@ async function read(req, res) {
         res.json({ error: false, result: results });
     }
     catch (er) {
+        logg.log(er.message);
         res.json(err.InternalServerObj);
     }
     finally {

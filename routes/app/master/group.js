@@ -4,7 +4,7 @@ const env = require("../../../env");
 const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
-
+const logg = require("../../../entity/logg");
 
 
 let createOrModify = async (req, res, create) => {
@@ -45,6 +45,7 @@ let createOrModify = async (req, res, create) => {
         }
     } catch (er) {
         res.json(err.InternalServerObj);
+        logg.log(er.message);
     } finally {
         if (pstmt == undefined) conn.end();
         else pstmt.close().then(() => conn.end());
@@ -85,7 +86,7 @@ let read = async (req, res) => {
         res.end()
     }
     catch (er) {
-
+        logg.log(er.message);
         res.json(err.InternalServerObj);
     }
     finally {

@@ -4,13 +4,14 @@ const env = require("../../../env");
 const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
+const logg=  require("../../../entity/logg");
 let read = async (req, res) => {
     let b = req.body;
     const conn = await mysql.createConnection(env.MYSQL_Props);
     let pstmt;
     let valid = true, result = [];
     try {
-        const sql="select a.id,a.name,a.unit,a.gid,b.name as unit_name,c.name as group_name,a.hser,s.id,s.prefix,s.suffix,s.initialValue,s.step,s.digits from item as a left join serial_no_seq as s on s.id=a.serial_seq  join units as b on a.unit=b.id inner join groups as c on a.gid=c.id ";
+        const sql="select a.id,a.name,a.unit,a.gid,b.name as unit_name,c.name as group_name,a.hser,a.serial_seq,s.prefix,s.suffix,s.initialValue,s.step,s.digits from item as a left join serial_no_seq as s on s.id=a.serial_seq  join units as b on a.unit=b.id inner join groups as c on a.gid=c.id ";
         if ('id' in b) {
             pstmt = await conn.prepare(sql.concat(" where a.id=? limit 1"));
             [r, c] = await pstmt.execute([b.id])
@@ -47,6 +48,7 @@ let read = async (req, res) => {
     }
     catch (er) {
         res.json(err.InternalServerObj);
+        logg.logg(er.message);
     }
     finally {
         if (pstmt != undefined) pstmt.close().then(() => conn.end());
@@ -100,6 +102,7 @@ let createOrModify = async (req, res, create) => {
     } catch (er) {
         await conn.rollback(); //Roll backing database transaction
         res.json({ error: true, code: err.InternalServer, errorMsg: err.InterServerErrMsg })
+        logg.logg(er.message);
     }
     finally {
 

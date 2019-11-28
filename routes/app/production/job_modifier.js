@@ -9,7 +9,7 @@ const err = require("../../../err");
 const express = require("express");
 const SerialSeq = require("../../../entity/serialSeq");
 const router = express.Router();
-
+const logg = require("../../../entity/logg");
 
 //router.post("/create", createModifyValidtor, create);
 //router.post("/modify", createModifyValidtor, modify);
@@ -114,7 +114,7 @@ const action = async (req, res) => {
     } catch (er) {
         await conn.rollback();
         res.json(err.InternalServerObj);
-
+        logg.log(er.message);
     }
     finally {
 
@@ -177,6 +177,7 @@ const add = async (req, res) => {
         res.json({ error: false });
     } catch (er) {
         await conn.rollback();
+        logg.log(er.message);
         res.json(err.InternalServerObj);
     } finally {
         if (pstmt != undefined) pstmt.close().then(() => { conn.end() });
@@ -208,6 +209,7 @@ const deleteFn = async (req, res) => {
         res.json({ error: false });
 
     } catch (er) {
+        logg.log(er.message);
         res.json(err.InternalServerObj);
     } finally {
         if (pstmt != undefined) pstmt.close().then(() => { conn.end() });
@@ -258,6 +260,7 @@ const read = async (req, res) => {
         }
     }
     catch (er) {
+        logg.log(er.message);
         res.json(err.InternalServerObj);
     } finally {
         if (pstmt == undefined) conn.end();

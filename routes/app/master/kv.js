@@ -5,7 +5,7 @@ const env = require("../../../env");
 const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
-
+const logg=require("../../../entity/logg");
 const deleteValidator = (req, res) => {
     const b = req.body;
     const o = j.object({ id: j.number().required() });
@@ -30,6 +30,7 @@ const deleteFn = async (req, res) => {
             res.json({ error: true, errorMsg: "Invalid KV pair", code: err.BadRequest });
         }
     } catch (er) {
+        logg.logg(er.message)
         res.json(err.InternalServerObj);
     } finally {
         if (pstmt == undefined) conn.close(); //connectio closed
@@ -62,6 +63,7 @@ const read = async (req, res) => {
         res.json({ error: false, result: r });
         //Closing connections 
     } catch (er) {
+        logg.logg(er.message);
         res.json(err.InternalServerObj);
     }
     finally {
@@ -121,8 +123,9 @@ const createOrModify = async (req, res, state) => {
         await conn.commit();
         res.json({ error: false });
 
-    } catch (error) {
+    } catch (er) {
         await conn.rollback();
+        logg.log(er.message)
         res.json({ error: true, code: err.InternalServer, errorMsg: err.InterServerErrMsg });
     } finally {
         if (pstmt == undefined) conn.end();

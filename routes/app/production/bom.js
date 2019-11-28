@@ -6,7 +6,7 @@ const env = require("../../../env");
 const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
-
+const logg  = require("../../../entity/logg");
 
 async function read(req, res) {
     const b = req.body
@@ -39,7 +39,7 @@ async function read(req, res) {
         }
         else if ('operation' in b) {
             //returns operations associated with routing in given bom
-            const x = "select r.operation as id,o.name,o.gid,o.description,o.workplace,w.name as workplace_name,g.name as group_name from route_operations as r join operation as o on o.id==r.operation join groups as g on g.id=o.gid join workplace as w on w.id=o.workplace join bom as b on b.routing=r.route where b.id=?";
+            const x = "select r.operation as id,o.name,o.gid,o.description,o.workplace,w.name as workplace_name,g.name as group_name from route_operations as r join operation as o on o.id=r.operation join groups as g on g.id=o.gid join workplace as w on w.id=o.workplace join bom as b on b.routing=r.route where b.id=?";
             pstmt = await conn.prepare(x);
             [results, c] = await pstmt.execute([b.operation]);
         }
@@ -52,6 +52,7 @@ async function read(req, res) {
 
         res.json({ error: false, result: results }).end();
     } catch (er) {
+        logg.log(er.message);
         res.json(err.InternalServerObj);
 
     } finally {
@@ -113,6 +114,7 @@ async function createOrModify(req, res, create) {
         await conn.commit();
     } catch (er) {
         await conn.rollback();
+        logg.log(er.message);
         res.json({ error: true, code: err.InternalServer, errorMsg: err.InterServerErrMsg });
     } finally {
 
