@@ -6,6 +6,7 @@ const express = require("express");
 const router = express.Router();
 const logg = require("../../../entity/logg");
 
+const fire = require("../../auth/fire");
 
 let read = async (req, res) => {
     //reading from database

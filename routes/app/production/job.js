@@ -8,6 +8,7 @@ const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
 const logg = require("../../../entity/logg");
+const fire = require("../../auth/fire");
 
 async function createOrModify(req, res, create) {
     const b = req.body;
@@ -129,10 +130,10 @@ async function read(req, res) {
     }
 }
 
-
-router.post("/create", js,fire.fireWall([{ '*': ['2.3.1'] }]), createModifyValidtor, create);
+const js = express.json({ type: "*/*" });
+router.post("/create", js, fire.fireWall([{ '*': ['2.3.1'] }]), createModifyValidtor, create);
 router.post("/modify", fire.fireWall([{ '*': ['2.3.2'] }]), createModifyValidtor, modify);
-router.post("/read", fire.fireWall([{ '*': ['2.3.3'] }]), readValidtor, read);
+router.post("/read", fire.fireWall([{ '*': ['2.3.3'] },{ 'workorder': ['2.3.3'] }]), readValidtor, read);
 
 
 

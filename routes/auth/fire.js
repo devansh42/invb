@@ -23,6 +23,7 @@ const fireWall = (permMap) => {
             keys.push('*'); //Checking against wildcard permission
         }
         console.log(permMap);
+        console.log("keys",keys);
         const ans = keys.filter(v => {
             //v can be * character
             const [requiredPerm] = permMap.filter(vv => {
@@ -31,6 +32,7 @@ const fireWall = (permMap) => {
                 }
                 return false;
             });
+            if(!requiredPerm)return false;
 
             console.log('perm', permMap);
             console.log("rq", requiredPerm);

@@ -230,7 +230,7 @@ const read = async (req, res) => {
     const { body } = req;
     const conn = await mysql.createConnection(env.MYSQL_Props);
     let sql, pstmt;
-    sql = "select sn.sn,sn.ser_seq,j.plId,j.entityId,j.id,j.workorder,j.operation,j.qty,j.post_time,j.st_time,j.fi_time,j.state,s.name as state_name,o.name from job_card as j join operation as o on o.id=j.operation join process_states as s on s.id=j.state join serial_nos as sn on sn.id=j.entityId where j.id=? limit 1";
+    sql = "select sn.sn,sn.ser_seq,j.plId,j.entityId,j.id,j.workorder,j.operation,j.qty,j.post_time,j.st_time,j.fi_time,j.state,s.name as state_name,o.name from job_card as j join operation as o on o.id=j.operation left join process_states as s on s.id=j.state left join serial_nos as sn on sn.id=j.entityId where j.id=? limit 1";
     try {
         pstmt = await conn.prepare(sql);
         let [r] = await pstmt.execute([body.id]);

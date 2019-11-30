@@ -9,6 +9,7 @@ const express = require("express");
 const router = express.Router();
 const logg = require("../../../entity/logg");
 const SerialSeq = require('../../../entity/serialSeq');
+const fire = require("../../auth/fire");
 
 async function createOrModify(req, res, create) {
     const b = req.body;

@@ -84,9 +84,10 @@ const verifyUser = async (username, password) => {
             throw Error("Invalid username or password");
         } else {
             row = rows[0];
-            pstmt = await conn.prepare("select menu from perms where uid=?");
-            [rs] = await pstmt.execute([row.uid]);
-            row["perms"] = rs.map(v => v.menu);
+            pstmt = await conn.prepare("select menu from perms where uid=? limit 1");
+            const [rs] = await pstmt.execute([row.uid]);
+            const res= rs[0];    
+            row["perms"] = res.menu.split(',');
         }
 
         return row;

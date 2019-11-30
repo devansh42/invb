@@ -7,6 +7,7 @@ const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
 const logg =require("../../../entity/logg");
+const fire = require("../../auth/fire");
 
 function create(req, res) {
     createOrModify(req, res, true);

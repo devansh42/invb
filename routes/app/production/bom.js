@@ -7,6 +7,7 @@ const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
 const logg  = require("../../../entity/logg");
+const fire = require("../../auth/fire");
 
 async function read(req, res) {
     const b = req.body
@@ -166,7 +167,7 @@ const js = express.json({ type: "*/*" });
 
 router.post("/create", js,fire.fireWall([{ '*': ['2.1.1'] }]), createModifyValidtor, create);
 router.post("/modify", fire.fireWall([{ '*': ['2.1.2'] }]), createModifyValidtor, modify);
-router.post("/read", fire.fireWall([{ '*': ['2.1.3'] }, { 'id': ['2.1.4'] }]), readValidtor, read);
+router.post("/read", fire.fireWall([{ '*': ['2.1.3'] },{ 'bom_material': ['2.1.4'] },{ 'operation': ['2.1.4'] }, { 'id': ['2.1.4'] }]), readValidtor, read);
 
 
 
