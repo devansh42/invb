@@ -5,7 +5,7 @@ const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
 const logg = require("../../../entity/logg");
-
+const fire = require("../../auth/fire");
 let createModifyValidtor = (req, res, next) => {
     let b = req.body;
     let o = j.object({
@@ -62,7 +62,7 @@ let read = async (req, res) => {
     try {
         let sql = "select a.name,a.id,a.gid,b.name as group_name from account as a inner join groups as b on b.id=a.gid ";
         if ("id" in b) {
-            let sql="select a.id,a.name,a.gender,a.dob,a.mobile_no,a.email,a.addr,a.town,a.pincode,a.id_proof,a.id_proof_no,a.join_date,a.gid,g.name as group_name,i.name as id_proof_type from account as a join groups as g on a.gid=g.id left join id_proof_type as i on i.id = a.id_proof where a.id=? limit 1";
+            let sql = "select a.id,a.name,a.gender,a.dob,a.mobile_no,a.email,a.addr,a.town,a.pincode,a.id_proof,a.id_proof_no,a.join_date,a.gid,g.name as group_name,i.name as id_proof_type from account as a join groups as g on a.gid=g.id left join id_proof_type as i on i.id = a.id_proof where a.id=? limit 1";
             pstmt = await conn.prepare(sql);
             [r, c] = await pstmt.execute([b.id])
             if (r.length > 0) {
@@ -160,10 +160,9 @@ let createOrModify = async (req, res, state) => {
 }
 
 
-
-router.post("/create", createModifyValidtor, create);
-router.post("/modify", createModifyValidtor, modify);
-router.post("/read", readValidtor, read);
+router.post("/create", fire.fireWall([{ '*': ['1.1.1'] }]), createModifyValidtor, create);
+router.post("/modify", fire.fireWall([{ '*': ['1.1.2'] }]), createModifyValidtor, modify);
+router.post("/read", fire.fireWall([{ '*': ['1.1.3'] }, { 'id': ['1.1.4'] }]), readValidtor, read);
 
 
 module.exports = router;

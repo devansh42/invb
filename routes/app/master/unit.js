@@ -140,9 +140,11 @@ const modify = (req, res) => {
 
 
 
-router.post("/create", createModifyValidtor, create);
-router.post("/modify", createModifyValidtor, modify);
-router.post("/read", readValidtor, read);
+
+
+router.post("/create", fire.fireWall([{ '*': ['1.5.1'] }]), createModifyValidtor, create);
+router.post("/modify", fire.fireWall([{ '*': ['1.5.2'] }]), createModifyValidtor, modify);
+router.post("/read", fire.fireWall([{ '*': ['1.5.3'] }, { 'id': ['1.5.4'] }]), readValidtor, read);
 
 
 module.exports = router;

@@ -10,6 +10,7 @@ const express = require("express");
 const SerialSeq = require("../../../entity/serialSeq");
 const router = express.Router();
 const logg = require("../../../entity/logg");
+const fire = require("../../auth/fire");
 
 //router.post("/create", createModifyValidtor, create);
 //router.post("/modify", createModifyValidtor, modify);
@@ -268,10 +269,11 @@ const read = async (req, res) => {
     }
 }
 
-router.post("/read", readValidtor, read);
-router.post("/delete", express.json({ type: "*/*" }), deleteValidtor, deleteFn);
-router.post("/add", express.json({ type: "*/*" }), addValidator, add);
-router.post("/action", actionValidator, action);
+const js = express.json({ type: "*/*" });
+router.post("/read", fire.fireWall([{ 'id': ['2.3.3'] }]), readValidtor, read);
+router.post("/delete", js, fire.fireWall([{ 'id': ['2.3.2'] }]), deleteValidtor, deleteFn);
+router.post("/add", js, fire.fireWall([{ 'id': ['2.3.2'] }]), addValidator, add);
+router.post("/action", fire.fireWall([{ 'id': ['2.3.2'] }]), actionValidator, action);
 
 
 module.exports = router;

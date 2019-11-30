@@ -5,7 +5,7 @@ const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
 const logg = require("../../../entity/logg");
-
+const fire = require("../../auth/fire");
 
 let createOrModify = async (req, res, create) => {
     let b = req.body;
@@ -67,7 +67,7 @@ let read = async (req, res) => {
                 res.json({ error: true, code: err.NoContent, errorMsg: "No Data" });
             } else {
                 let r = rows[0];
-                res.json({ error: false, result:r });
+                res.json({ error: false, result: r });
 
             }
         }
@@ -133,9 +133,9 @@ let createModifyValidtor = (req, res, next) => {
 
 
 
-router.post("/create", createModifyValidtor, create);
-router.post("/modify", createModifyValidtor, modify);
-router.post("/read", readValidtor, read);
+router.post("/create", fire.fireWall([{ '*': ['1.4.1'] }]), createModifyValidtor, create);
+router.post("/modify", fire.fireWall([{ '*': ['1.4.2'] }]), createModifyValidtor, modify);
+router.post("/read", fire.fireWall([{ '*': ['1.4.3'] }, { 'id': ['1.4.4'] }]), readValidtor, read);
 
 
 module.exports = router;

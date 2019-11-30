@@ -130,9 +130,9 @@ async function read(req, res) {
 }
 
 
-router.post("/create", createModifyValidtor, create);
-router.post("/modify", createModifyValidtor, modify);
-router.post("/read", readValidtor, read);
+router.post("/create", js,fire.fireWall([{ '*': ['2.3.1'] }]), createModifyValidtor, create);
+router.post("/modify", fire.fireWall([{ '*': ['2.3.2'] }]), createModifyValidtor, modify);
+router.post("/read", fire.fireWall([{ '*': ['2.3.3'] }]), readValidtor, read);
 
 
 
