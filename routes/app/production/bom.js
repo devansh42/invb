@@ -93,10 +93,10 @@ async function createOrModify(req, res, create) {
             //No Duplicates
             if (create) {
                 pstmt = await conn.prepare("insert into bom(name,item,qty,routing,description)values(?,?,?,?,?)");
-                [r, c] = await pstmt.execute([b.name, b.item, b.qty, b.route, b.description]);
+                const [r, c] = await pstmt.execute([b.name, b.item, b.qty, b.route, b.description]);
                 const bomId = r.insertId;
                 pstmt = await conn.prepare("insert into bom_material(bom,item,qty,rate)values(?,?,?,?)");
-                const pp = b.materialList.map(v => {
+                const pp = b.materialList.map(v     => {
                     return pstmt.execute([bomId, v.id, v.qty, v.rate]);//appending promises to resolve at same time
                 });
                 await Promise.all(pp); //resolve when all the promises are 
@@ -165,9 +165,9 @@ function createModifyValidtor(req, res, next) {
 const js = express.json({ type: "*/*" });
 
 
-router.post("/create", js,fire.fireWall([{ '*': ['2.1.1'] }]), createModifyValidtor, create);
+router.post("/create", js,fire.fireWall([{ 'item': ['2.1.1'] }]), createModifyValidtor, create);
 router.post("/modify", fire.fireWall([{ '*': ['2.1.2'] }]), createModifyValidtor, modify);
-router.post("/read", fire.fireWall([{ '*': ['2.1.3'] },{ 'bom_material': ['2.1.4'] },{ 'operation': ['2.1.4'] }, { 'id': ['2.1.4'] }]), readValidtor, read);
+router.post("/read", fire.fireWall([{ '*': ['2.1.3'] },{ 'bom_material': ['2.1.3'] },{ 'operation': ['2.1.3'] },{ 'item': ['2.1.3'] }, { 'id': ['2.1.4'] }]), readValidtor, read);
 
 
 

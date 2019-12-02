@@ -9,21 +9,18 @@ const err = require("../../err");
  * @param {object} permMap is the mapping of request
  * 
  */
-const fireWall = (permMap) => {
+const demoWall = (permMap) => {
 
     return (req, res, next) => {
         const perms = JSON.parse(req.get("X-PERMS")); //Retriving user permissions from header
         //console.log(perms);
-        const keys = [];
-        for (const k in req.body) {
-            keys.push(k); //Making array of request body param name
-        }
+        const keys = Object.keys(req.body);
         console.log(keys);
         if (keys.length == 0) {
             keys.push('*'); //Checking against wildcard permission
         }
         console.log(permMap);
-        console.log("keys",keys);
+        console.log("keys", keys);
         const ans = keys.filter(v => {
             //v can be * character
             const [requiredPerm] = permMap.filter(vv => {
@@ -32,7 +29,7 @@ const fireWall = (permMap) => {
                 }
                 return false;
             });
-            if(!requiredPerm)return false;
+            if (!requiredPerm) return false;
 
             console.log('perm', permMap);
             console.log("rq", requiredPerm);
@@ -42,10 +39,7 @@ const fireWall = (permMap) => {
                 //Required param is an array
             } else {
                 //Required perms is either string  
-                const key = [];
-                for (const x in requiredPerm) {
-                    key.push(x);
-                }
+                const key = Object.keys(requiredPerm)
                 const [keyName] = key;
                 console.log(requiredPerm[keyName]);
                 return perms.indexOf(requiredPerm[keyName][0]) != -1
@@ -63,6 +57,38 @@ const fireWall = (permMap) => {
     }
 
 
+}
+
+const fireWall = (permArr) => {
+    let permMap = {};
+    if (permArr instanceof Array) {
+        permArr.forEach(v => {
+            const key = Object.keys(v)[0];
+            permMap[key] = v[key];
+        });
+    } else {
+        permMap = permArr;
+    }
+    return function (req, res, next) {
+        console.log(permMap);
+
+
+        const havePermissions = JSON.parse(req.get("X-PERMS"));
+        const permMapKeys = Object.keys(permMap);
+        const bodyKeys = Object.keys(req.body);
+        if ( bodyKeys.length == 0) bodyKeys.push('*');
+        const foundKeys = bodyKeys.filter(v => permMapKeys.indexOf(v) != -1);
+        console.log(foundKeys);
+        const passedPerms = foundKeys.filter(v => {
+            const passedone = permMap[v].filter(vv=>havePermissions.indexOf(vv)!=-1);
+            console.log(passedone);
+            return passedone.length>0;
+        });
+        console.log(passedPerms);
+        if(passedPerms.length>0)next();
+        else res.status(err.ForBidden).json({ error: true, errorMsg: "Access Denied: You are not permiitted to this service", code: err.ForBidden });
+     
+    }
 }
 
 /**

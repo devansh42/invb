@@ -12,8 +12,6 @@ const router = express.Router();
 const logg = require("../../../entity/logg");
 const fire = require("../../auth/fire");
 
-//router.post("/create", createModifyValidtor, create);
-//router.post("/modify", createModifyValidtor, modify);
 
 const actionValidator = (req, res, next) => {
     const { body } = req;
@@ -33,7 +31,7 @@ const action = async (req, res) => {
     const { body } = req;
     const b = body;
     const conn = await mysql.createConnection(env.MYSQL_Props);
-    let sql = "select st_time,fi_time,state from job_card where id= ?";
+    let sql = "select st_time,fi_time,state from job_card where id= ? limit 1";
     let pstmt;
     await conn.beginTransaction();
     try {
@@ -76,7 +74,29 @@ const action = async (req, res) => {
                 pstmt = await conn.prepare(sql);
                 await pstmt.execute([body.time, nextState, body.job_card]);
                 error.nextState = nextState; //new state of operation
-                if (b.action == "finish") {
+                if (b.action == "start") {
+                   sql = "select state from workorder where id=? limit 1";
+                    pstmt =await conn.prepare(sql);    
+                    [r] = await pstmt.execute([body.workorder]);
+                    const rw=r[0];
+                    if (rw.state == 1) {
+                        //Workorder is in not started
+                        sql = "select min(st_time) as m from job_card where state >? and workorder=?";
+                        console.log("dem");
+                        pstmt= await conn.prepare(sql);
+                        [r] = await pstmt.execute([1, body.workorder]);
+                        console.log(r);
+                        if (r.length > 0 &&  !isNaN(r[0].m)) {
+                            const t = r[0].m;
+                            console.log("Google",t);
+                            sql = "update workorder set st_date =? , state=? where id=? limit 1";
+                            pstmt  = await conn.prepare(sql);
+                             await pstmt.execute([t, 2, body.workorder])
+
+                        }
+                    }
+                }
+                else if (b.action == "finish") {
                     //checking state of workorder
                     sql = "select entityId,plId from job_card where id=?";
                     pstmt = await conn.prepare(sql);
@@ -89,14 +109,14 @@ const action = async (req, res) => {
                         //Now we will update workder completed quantity
                         //And also update workorder satus if it is changed
                         if (eId != null) {
-                            sql = "update workorder set com_qty = com_qty + 1 , state = case when com_qty=qty then ? else state end where id= ? ";
+                            sql = "update workorder set com_qty = com_qty + 1 ,de_date = ?,state = case when com_qty=qty then ? else state end where id= ? ";
                             pstmt = await conn.prepare(sql);
-                            [r] = await pstmt.execute([4, body.workorder]);
+                            [r] = await pstmt.execute([new Date().getTime(), 4, body.workorder]);
 
                         } else {
-                            sql = "update workorder set com_qty = qty where id=?";
+                            sql = "update workorder set com_qty = qty, de_date= ?,state = ? where id=?";
                             pstmt = await conn.prepare(sql);
-                            [r] = await pstmt.execute([body.workorder]);
+                            [r] = await pstmt.execute([new Date().getTime(), 4, body.workorder]);
 
                         }
 
@@ -272,8 +292,8 @@ const read = async (req, res) => {
 const js = express.json({ type: "*/*" });
 router.post("/read", fire.fireWall([{ 'id': ['2.3.3'] }]), readValidtor, read);
 router.post("/delete", js, fire.fireWall([{ 'id': ['2.3.2'] }]), deleteValidtor, deleteFn);
-router.post("/add", js, fire.fireWall([{ 'id': ['2.3.2'] }]), addValidator, add);
-router.post("/action", fire.fireWall([{ 'id': ['2.3.2'] }]), actionValidator, action);
+router.post("/add", js, fire.fireWall([{ 'job_card': ['2.3.2'] }]), addValidator, add);
+router.post("/action", fire.fireWall([{ 'job_card': ['2.3.2'] }]), actionValidator, action);
 
 
 module.exports = router;

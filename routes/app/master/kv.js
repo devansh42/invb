@@ -5,8 +5,8 @@ const env = require("../../../env");
 const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
-const logg=require("../../../entity/logg");
-const deleteValidator = (req, res) => {
+const logg = require("../../../entity/logg");
+const deleteValidator = (req, res,next) => {
     const b = req.body;
     const o = j.object({ id: j.number().required() });
     if (o.validate(b) == null) {
@@ -19,11 +19,13 @@ const deleteFn = async (req, res) => {
     const { body } = req;
     const conn = await mysql.createConnection(env.MYSQL_Props);
     const sql = "delete from kv_pair where id= ?";
+    let pstmt;
     try {
-        let pstmt;
+        
         pstmt = await conn.prepare(sql);
-        const r = await pstmt.execute([body.id]);
-        if (r.rowsAffected == 1) {
+        const [r] = await pstmt.execute([body.id]);
+            console.log(r);
+        if (r.affectedRows == 1) {
             res.json({ error: false });
         } else {
             //couldn't delete anything
@@ -72,14 +74,15 @@ const read = async (req, res) => {
     }
 }
 
-const createModifyValidtor = (req, res) => {
+const createModifyValidtor = (req, res,next) => {
     const b = req.body;
     const o = j.object({
-        kv_pairs: j.array({
-            id: j.number().required(),
+        id: j.number().positive().required(),
+     /*   kv_pairs: j.array().items(j.object({
+
             kv_key: j.string().required().max(250),
             kv_value: j.string().required().max(250)
-        }).required()
+        })).required()*/
     });
     if (o.validate(b) == null) {
         res.json({ error: true, errorMsg: "Invalid Input Supplied", code: err.BadRequest });
@@ -89,16 +92,17 @@ const createModifyValidtor = (req, res) => {
 const createOrModify = async (req, res, state) => {
     const conn = await mysql.createConnection(env.MYSQL_Props);
     const { body } = req;
-    let pstmt = await conn.prepare(sql);
+    let pstmt;
     await conn.beginTransaction(); //Begining db tx 
 
     try {
 
-        let sql = "select kv_key from kv_pair where entity=?";
+        let sql = "select kv_key from kv_pair where entity=? limit 1";
+        pstmt = await conn.prepare(sql);
+    
         let [r] = await pstmt.execute([body.id]);
-        const keys = body.kv_pairs.map(v => kv_key.toLowerCase());
-
-
+        const keys = body.kv_pairs.map(v => v["kv_key"].toLowerCase());
+        
         if (state) { //create new
             for (let i = 0; i < r.length; i++) {
                 if (keys.indexOf(r[i].kv_key.toLowerCase()) != -1) {
@@ -109,7 +113,7 @@ const createOrModify = async (req, res, state) => {
                 }
             }
 
-            sql = "INSERT INTO inv.kv_pair(kv_key,kv_value,entity)VALUES(?,?,?)";
+            sql = "INSERT INTO kv_pair(kv_key,kv_value,entity)VALUES(?,?,?)";
             pstmt = await conn.prepare(sql);
             const ar = body.kv_pairs.map(v => pstmt.execute([v.kv_key, v.kv_value, v.id]));
             await Promise.all(ar);
@@ -143,10 +147,10 @@ let modify = (req, res) => {
     createOrModify(req, res, false);
 }
 
+const js = express.json({type:"*/*"});
 
-
-router.post("/create", createModifyValidtor, create);
-router.post("/modify", createModifyValidtor, modify);
+router.post("/create",js, createModifyValidtor, create);
+router.post("/modify",js, createModifyValidtor, modify);
 router.post("/read", readValidtor, read);
 router.post("/delete", deleteValidator, deleteFn);
 

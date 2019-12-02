@@ -21,8 +21,8 @@ async function createOrModify(req, res, create) {
         await conn.beginTransaction(); //Begining Tx
 
         if (create) {
-            pstmt = await conn.prepare("insert into workorder(item,qty,bom,post_date,nbom,state)VALUES(,?,?,?,?,?,?)");
-            const [resultSet] = await pstmt.execute([b.item, b.qty, b.bom, b.post_date, b.nbom, 1])
+            pstmt = await conn.prepare("insert into workorder(item,qty,bom,post_date,nbom,state)VALUES(?,?,?,?,?,?)");
+            const [resultSet] = await pstmt.execute([b.item, b.qty, b.bom, new Date(b.post_date).getTime(), b.nbom, 1])
             const wid = resultSet.insertId;
             //Check if this item has serial no.
             pstmt = await conn.prepare("select hser,serial_seq from item where id=?");
@@ -204,7 +204,7 @@ async function read(req, res) {
 
 
 
-router.post("/create",fire.fireWall([{ '*': ['2.2.1'] }]), createModifyValidtor, create);
+router.post("/create",fire.fireWall([{'item':['2.2.1']},{ '*': ['2.2.1'] }]), createModifyValidtor, create);
 router.post("/modify", fire.fireWall([{ '*': ['2.2.2'] }]), createModifyValidtor, modify);
 router.post("/read", fire.fireWall([{ '*': ['2.2.3'] }, { 'id': ['2.2.4'] }]), readValidtor, read);
 

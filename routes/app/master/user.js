@@ -5,7 +5,7 @@ const err = require("../../../err");
 const express = require("express");
 const router = express.Router();
 const fire = require("../../auth/fire");
-const logg =require("../../../entity/logg");
+const logg = require("../../../entity/logg");
 async function read(req, res) {
     const { body } = req;
     const conn = await mysql.createConnection(env.MYSQL_Props);
@@ -60,11 +60,11 @@ async function createOrModify(req, res, create) {
     conn.beginTransaction();
     let pstmt;
     try {
-        
+
         pstmt = await conn.prepare("select uid from users where username=? limit 1");
         const [r] = await pstmt.execute([body.username]);
         if (r.length > 0) {
-            res.status(200).json({ code:err.Duplicate, error: true, errorMsg: "Duplicate username" }).end();
+            res.status(200).json({ code: err.Duplicate, error: true, errorMsg: "Duplicate username" }).end();
         } else {
 
             if (create) {//make new one
@@ -84,7 +84,7 @@ async function createOrModify(req, res, create) {
                 await pstmt.execute([uid]);
                 await insertPerms(pstmt, conn, body, uid);
             }
-            res.status(err.Ok).json({error:false}).end();
+            res.status(err.Ok).json({ error: false }).end();
         }
         await conn.commit();
     }
@@ -111,7 +111,7 @@ function readValidtor(req, res, next) {
     let o = j.object({
         uid: j.number().positive(),
         aid: j.number().positive(),
-        perms:j.number().positive()
+        perms: j.number().positive()
     });
     const { body } = req;
     if (o.validate(body) == null) {
@@ -138,22 +138,67 @@ function createModifyValidtor(req, res, next) {
 }
 
 
+async function passwordChanger(req, res) {
+    const conn = await mysql.createConnection(env.MYSQL_Props);
+    let pstmt;
+    const b = req.body;
+    try {
+        let sql = "update users set password = ? where password = ? and uid=? limit 1"
+        pstmt = await conn.prepare(sql);
+        console.log(b);
+        const [resultSet] = await pstmt.execute([b.password, b.curpassword, b.uid]);
+
+        if (resultSet.affectedRows > 0) {
+            res.json({ error: false });
+        } else {
+            res.json({ error: true, code: err.BadRequest, errorMsg: "Password is incorrect" });
+        }
+    } catch (error) {
+        logg.log(error.message);
+        res.json(err.InternalServerObj);
+    } finally {
+        if (pstmt == undefined) conn.end();
+        else pstmt.close().then(r => { conn.end() });
+    }
+}
+
+
+
+
+
+function passwordModifierValidator(req, res, next) {
+    const { body } = req;
+    const o = j.object({
+        curpassword: j.string().min(8).required(),
+        password: j.string().min(8).required(),
+        cpassword: j.string().min(8).required()
+    });
+    if (body.password !== body.cpassword || o.validate(body) == null) {
+        res.json({ error: true, code: err.BadRequest, errorMsg: "Invalid request Parameters" })
+    }
+    else next();
+}
+
+
+
+
+
+
 
 function create(req, res) {
     createOrModify(req, res, true);
 }
 
 function modify(req, res) {
-
     createOrModify(req, res, false);
 }
 
 
 
 
-router.post("/create", fire.fireWall([{ 'username': ['1.2.1'] }]), createModifyValidtor, create);
+router.post("/create", fire.fireWall([{ '*': ['1.2.1'] }]), createModifyValidtor, create);
 router.post("/modify", fire.fireWall([{ '*': ['1.2.2'] }]), createModifyValidtor, modify);
-router.post("/read", fire.fireWall([{ '*': ['1.2.3'] }, { 'id': ['1.2.4'] },{ 'perms': ['1.2.4'] }]), readValidtor, read);
-
+router.post("/read", fire.fireWall([{ '*': ['1.2.3'] }, { 'id': ['1.2.4'] }, { 'perms': ['1.2.4'] }]), readValidtor, read);
+router.post("/password", passwordModifierValidator, passwordChanger);
 
 module.exports = router;

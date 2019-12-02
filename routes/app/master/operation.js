@@ -139,7 +139,7 @@ function readValidtor(req, res, next) {
 
 router.post("/create", fire.fireWall([{ '*': ['1.8.1'] }]), createModifyValidtor, create);
 router.post("/modify", fire.fireWall([{ '*': ['1.8.2'] }]), createModifyValidtor, modify);
-router.post("/read", fire.fireWall([{ '*': ['1.8.3'] }, { 'id': ['1.8.4'] }]), readValidtor, read);
+router.post("/read", fire.fireWall([  {'route_operations':['1.8.3']},  { '*': ['1.8.3'] }, { 'id': ['1.8.4'] }]), readValidtor, read);
 
 
 module.exports = router;
