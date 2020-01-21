@@ -115,11 +115,19 @@ const mysql = require("mysql2/promise");
 const env = require("../../../env");
 const permission = [];
 async function doT() {
-    const sql = "INSERT INTO inv.perms(uid,menu)VALUES(?,?)";
+    const sql = "select id from menu";
     const conn = await mysql.createConnection(env.MYSQL_Props);
     const pstmt = await conn.prepare(sql);
-    insertMenu(pstmt, perms);
-    await pstmt.execute([1, permission.join(',')]);
+    const [r, c] = await pstmt.execute();
+    const o = {};
+    r.forEach((v, i) => {
+       if(v.id.split(".").length==3)o[v.id] = "";
+    });
+    console.log(o);
+    pstmt.close().then(() => {
+        conn.end();
+    });
+
 }
 
 
@@ -133,6 +141,6 @@ async function insertMenu(pstmt, perms) {
 }
 
 
-doT().then(r=>{
+doT().then(r => {
     console.log(permission, permission.length);
 });
